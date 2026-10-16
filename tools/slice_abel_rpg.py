@@ -218,7 +218,10 @@ def build_abel(full):
     hurt = figures(full, 825, 922, 14, 765)
     die = figures(full, 922, 1023, 14, 300, min_h=0.22)          # Abel tendido (ancho y bajo)
     door = figures(full, 922, 1023, 300, 600, min_h=0.4)          # entrar por la puerta (Abel + marco)
+    # nado (fila 4): el agua pintada se quita con el fondo; queda el torso/brazos de la brazada sobre la línea de agua
+    swim = figures(full, 314, 392, 18, 765, min_h=0.18, need_dark=False)
     anims = {"idle": idleS, "fight": fight, "hurt": hurt, "die": die, "door": door}
+    if len(swim) >= 2: anims["swim"] = swim
     # alias para el código existente
     anims["walk"] = anims["idle"]
     anims["run"] = anims["idle"]
