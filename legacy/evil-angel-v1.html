@@ -1,0 +1,4457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evil-Angel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold-light: #fbe7a1;
+      --gold: #e3b341;
+      --gold-deep: #9c7416;
+      --glow: rgba(227, 179, 65, 0.55);
+      --bg: #000;
+      --panel: rgba(10, 6, 18, 0.94);
+      --muted: #a8935c;
+      --good: #9dffcf;
+      --bad: #ff7a5a;
+      --crawl-speed: 26; /* px por segundo */
+      --cb-panel-h: 150px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      overflow: hidden;
+      color: var(--gold);
+      font-family: "Pixelify Sans", "Courier New", monospace;
+      -webkit-font-smoothing: none;
+      user-select: none;
+    }
+
+    button { font: inherit; }
+
+    /* =====================================================
+       CINEMÁTICA (CRAWL)
+       ===================================================== */
+    #intro {
+      position: fixed;
+      inset: 0;
+      perspective: 380px;
+      perspective-origin: 50% 30%;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 38%, #000 100%);
+              mask-image: linear-gradient(to bottom, transparent 0%, #000 38%, #000 100%);
+      transition: opacity 1.2s ease;
+    }
+
+    #crawl-plane {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: min(92vw, 720px);
+      height: 100%;
+      transform-origin: 50% 100%;
+      transform: translateX(-50%) rotateX(24deg);
+    }
+
+    #crawl {
+      position: absolute;
+      top: 100%;
+      width: 100%;
+      text-align: center;
+      will-change: transform;
+    }
+
+    #crawl.rolling { animation: crawl-up var(--crawl-duration, 90s) linear forwards; }
+
+    @keyframes crawl-up {
+      from { transform: translateY(0); }
+      to   { transform: translateY(var(--crawl-distance, -3000px)); }
+    }
+
+    .title {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(28px, 6vw, 56px);
+      letter-spacing: 0.08em;
+      margin-bottom: 0.6em;
+      background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 55%, var(--gold-deep) 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 10px var(--glow));
+    }
+
+    .chapter {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(11px, 2vw, 16px);
+      color: var(--gold-light);
+      letter-spacing: 0.15em;
+      margin-bottom: 2.2em;
+      text-shadow: 0 0 8px var(--glow);
+    }
+
+    .crawl p {
+      font-size: clamp(18px, 3.1vw, 28px);
+      line-height: 1.55;
+      margin-bottom: 1.2em;
+      text-align: justify;
+      text-align-last: center;
+      text-shadow: 0 0 6px rgba(227, 179, 65, 0.35);
+    }
+
+    .lang-tag {
+      display: inline-block;
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      color: var(--gold-deep);
+      border: 1px solid var(--gold-deep);
+      padding: 6px 10px;
+      margin-bottom: 1.8em;
+      letter-spacing: 0.2em;
+    }
+
+    .ornament {
+      font-size: 22px;
+      letter-spacing: 1.2em;
+      margin: 2.4em 0 2.6em;
+      color: var(--gold);
+      text-shadow: 0 0 10px var(--glow);
+    }
+
+    #skip-hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 9px;
+      color: var(--gold-deep);
+      letter-spacing: 0.1em;
+      opacity: 0;
+      animation: fade-in 1s ease 3s forwards, blink 2.4s ease-in-out 4s infinite;
+      pointer-events: none;
+    }
+
+    /* ---------- BOTÓN START ---------- */
+    #start-wrap {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 1.8s ease, visibility 0s linear 1.8s;
+    }
+
+    #start-wrap.show {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 1.8s ease, visibility 0s;
+    }
+
+    #start-wrap .title { margin-bottom: 0; }
+
+    .gold-btn {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(12px, 2.4vw, 18px);
+      letter-spacing: 0.15em;
+      color: var(--gold-light);
+      background: rgba(20, 14, 0, 0.6);
+      border: 3px solid var(--gold);
+      padding: 20px 38px;
+      cursor: pointer;
+      text-shadow: 0 0 8px var(--glow);
+      transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    #start-btn { animation: glow-pulse 2.2s ease-in-out infinite; }
+
+    .gold-btn:hover,
+    .gold-btn:focus-visible {
+      background: var(--gold);
+      color: #1a1200;
+      text-shadow: none;
+      transform: scale(1.05);
+      outline: none;
+    }
+
+    .gold-btn:active { transform: scale(0.97); }
+    .gold-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+    @keyframes glow-pulse {
+      0%, 100% {
+        box-shadow: 0 0 6px var(--glow), 0 0 18px rgba(227, 179, 65, 0.25), inset 0 0 6px rgba(227, 179, 65, 0.25);
+        border-color: var(--gold);
+      }
+      50% {
+        box-shadow: 0 0 14px var(--gold), 0 0 40px var(--glow), inset 0 0 12px rgba(251, 231, 161, 0.4);
+        border-color: var(--gold-light);
+      }
+    }
+
+    /* ---------- MENSAJE DE NIVEL ---------- */
+    #level-msg {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      text-align: center;
+      padding: 0 16px;
+      transition: opacity 1.2s ease;
+    }
+
+    #level-msg.show { display: flex; }
+    #level-msg.fade-out { opacity: 0; }
+
+    #level-msg .label {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(10px, 1.8vw, 13px);
+      color: var(--gold-deep);
+      letter-spacing: 0.3em;
+      opacity: 0;
+      animation: fade-in 1.2s ease 0.6s forwards;
+    }
+
+    #level-msg .main {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(14px, 3.2vw, 28px);
+      line-height: 1.7;
+      color: var(--gold-light);
+      text-shadow: 0 0 12px var(--glow), 0 0 30px rgba(227, 179, 65, 0.3);
+      opacity: 0;
+      animation: fade-in 1.6s ease 1s forwards, float 4s ease-in-out 1s infinite;
+    }
+
+    #level-msg .main span { color: var(--gold); display: block; }
+
+    @keyframes fade-in { to { opacity: 1; } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-14px); }
+    }
+
+    #flash {
+      position: fixed;
+      inset: 0;
+      background: var(--gold-light);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    #flash.go { animation: flash 0.9s ease-out; }
+    @keyframes flash {
+      0%   { opacity: 0; }
+      12%  { opacity: 0.85; }
+      100% { opacity: 0; }
+    }
+
+    .hidden { opacity: 0 !important; pointer-events: none; }
+
+    /* =====================================================
+       MOTOR DE EXPLORACIÓN
+       ===================================================== */
+    #game-root {
+      position: fixed;
+      inset: 0;
+      display: none;
+      opacity: 0;
+      transition: opacity 1.6s ease;
+    }
+    #game-root.on   { display: block; }
+    #game-root.show { opacity: 1; }
+    #game-root.encounter { animation: encounter 0.75s steps(1) forwards; }
+
+    @keyframes encounter {
+      0%   { filter: none; }
+      12%  { filter: invert(1); }
+      24%  { filter: none; }
+      36%  { filter: invert(1) hue-rotate(180deg); }
+      48%  { filter: none; }
+      60%  { filter: brightness(3) saturate(0); }
+      80%  { filter: brightness(0.4); }
+      100% { filter: brightness(0); }
+    }
+
+    #game {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display: block;
+    }
+
+    #vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+    }
+
+    /* ---------- HUD ---------- */
+    #hud {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .hud-level {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(8px, 1.4vw, 11px);
+      letter-spacing: 0.15em;
+      color: var(--gold-light);
+      text-shadow: 0 0 8px var(--glow), 2px 2px 0 #000;
+    }
+
+    .hud-obj {
+      background: rgba(8, 5, 14, 0.7);
+      border: 2px solid var(--gold-deep);
+      padding: 8px 12px;
+      max-width: min(420px, 100%);
+      font-size: clamp(14px, 1.8vw, 17px);
+      color: var(--gold-light);
+      line-height: 1.3;
+    }
+
+    .hud-obj .obj-label {
+      font-family: "Press Start 2P", monospace;
+      font-size: 8px;
+      color: var(--gold);
+      margin-right: 6px;
+      letter-spacing: 0.1em;
+    }
+
+    .hud-obj small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.85em;
+      margin-top: 2px;
+    }
+
+    .updated { animation: obj-flash 1.2s ease; }
+    @keyframes obj-flash {
+      0%   { border-color: var(--gold-light); box-shadow: 0 0 18px var(--gold); }
+      100% { border-color: var(--gold-deep); box-shadow: none; }
+    }
+
+    #hud-stats {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      display: flex;
+      gap: 10px;
+      pointer-events: none;
+    }
+    #hud-stats span {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(8px, 1.3vw, 10px);
+      letter-spacing: 0.1em;
+      color: var(--gold-light);
+      background: rgba(8, 5, 14, 0.7);
+      border: 2px solid var(--gold-deep);
+      padding: 7px 10px;
+      text-shadow: 1px 1px 0 #000;
+    }
+    #hud-lp { color: var(--good) !important; }
+
+    #controls-hint {
+      position: absolute;
+      right: 16px;
+      bottom: 14px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      color: var(--gold-deep);
+      text-shadow: 1px 1px 0 #000;
+      pointer-events: none;
+    }
+
+    #exit-arrow {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: "Press Start 2P", monospace;
+      font-size: 12px;
+      color: var(--gold-light);
+      text-shadow: 0 0 10px var(--gold);
+      display: none;
+      pointer-events: none;
+      animation: nudge 1s ease-in-out infinite;
+    }
+    #exit-arrow.show { display: block; }
+    @keyframes nudge {
+      0%, 100% { transform: translate(0, -50%); opacity: 1; }
+      50%      { transform: translate(8px, -50%); opacity: 0.55; }
+    }
+
+    /* ---------- DIÁLOGO ---------- */
+    #dialog {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      width: min(860px, calc(100% - 32px));
+      background: var(--panel);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #000, 0 0 24px rgba(227, 179, 65, 0.3);
+      padding: 14px 16px;
+      display: none;
+      gap: 14px;
+      align-items: flex-start;
+      cursor: pointer;
+    }
+    #dialog.show { display: flex; animation: pop-in 0.25s ease-out; }
+
+    #portrait {
+      width: 72px;
+      height: 72px;
+      flex: none;
+      border: 2px solid var(--gold-deep);
+      image-rendering: pixelated;
+      background: #140e20;
+    }
+
+    .dlg-body { flex: 1; min-width: 0; }
+
+    #dlg-name {
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    #dlg-en {
+      font-size: clamp(16px, 2.2vw, 21px);
+      line-height: 1.4;
+      color: var(--gold-light);
+      min-height: 1.4em;
+    }
+
+    #dlg-es {
+      font-size: clamp(14px, 1.8vw, 17px);
+      line-height: 1.35;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 1.35em;
+    }
+
+    #dlg-next {
+      position: absolute;
+      right: 12px;
+      bottom: 8px;
+      font-size: 12px;
+      color: var(--gold);
+      animation: blink 0.9s steps(2) infinite;
+      visibility: hidden;
+    }
+
+    @keyframes pop-in {
+      from { opacity: 0; transform: translate(-50%, 10px); }
+      to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* ---------- PUZZLE MODAL ---------- */
+    #puzzle {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(4, 2, 10, 0.72);
+      padding: 16px;
+    }
+    #puzzle.show { display: flex; }
+
+    .puzzle-panel {
+      width: min(620px, 100%);
+      background: var(--panel);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #000, 0 0 40px rgba(227, 179, 65, 0.35);
+      padding: 24px 22px 22px;
+      text-align: center;
+      animation: panel-in 0.35s ease-out;
+    }
+    .puzzle-panel.shake { animation: shake 0.4s ease; }
+
+    @keyframes panel-in {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(9px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(4px); }
+    }
+
+    .puzzle-title {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(10px, 2vw, 13px);
+      letter-spacing: 0.12em;
+      color: var(--gold-light);
+      text-shadow: 0 0 8px var(--glow);
+      margin-bottom: 14px;
+    }
+
+    .puzzle-glitch {
+      font-family: "Press Start 2P", monospace;
+      font-size: 9px;
+      color: #ff9a3c;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+      animation: glitch 1.6s steps(1) infinite;
+    }
+    @keyframes glitch {
+      0%, 100% { opacity: 1; transform: none; }
+      42% { opacity: 0.5; transform: translateX(2px); }
+      44% { opacity: 1; transform: translateX(-2px); }
+      70% { opacity: 0.7; }
+    }
+
+    .puzzle-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--gold-light);
+      line-height: 1.4;
+      margin-bottom: 22px;
+    }
+    .puzzle-sub small { display: block; color: var(--muted); font-size: 0.9em; }
+
+    .sentence {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 10px;
+      min-height: 64px;
+      padding: 14px 10px;
+      border-top: 2px dashed rgba(156, 116, 22, 0.5);
+      border-bottom: 2px dashed rgba(156, 116, 22, 0.5);
+      margin-bottom: 16px;
+    }
+
+    #tiles {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .tile {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(11px, 2.2vw, 14px);
+      color: var(--gold-light);
+      background: #1c1408;
+      border: 2px solid var(--gold);
+      padding: 14px 16px;
+      cursor: grab;
+      touch-action: none;
+      box-shadow: 0 4px 0 #000, inset 0 0 8px rgba(227, 179, 65, 0.15);
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tile:hover, .tile:focus-visible {
+      background: #2b1f0b;
+      outline: none;
+      box-shadow: 0 4px 0 #000, 0 0 12px var(--glow);
+    }
+    .tile.dragging {
+      position: fixed;
+      z-index: 1000;
+      cursor: grabbing;
+      pointer-events: none;
+      transform: scale(1.08) rotate(-2deg);
+      box-shadow: 0 10px 0 rgba(0, 0, 0, 0.6), 0 0 22px var(--gold);
+      background: #3a2a0c;
+    }
+    .tile.placeholder {
+      background: transparent;
+      border: 2px dashed var(--gold-deep);
+      box-shadow: none;
+      color: transparent;
+    }
+    .tile.correct {
+      background: var(--gold);
+      color: #1a1200;
+      box-shadow: 0 0 18px var(--gold-light);
+      cursor: default;
+    }
+
+    .period {
+      font-family: "Press Start 2P", monospace;
+      font-size: 18px;
+      color: var(--gold);
+      padding-bottom: 12px;
+    }
+
+    #puzzle-feedback {
+      min-height: 1.4em;
+      font-size: 16px;
+      margin-bottom: 14px;
+      color: var(--gold-light);
+    }
+    #puzzle-feedback.bad  { color: var(--bad); }
+    #puzzle-feedback.good { color: var(--good); text-shadow: 0 0 10px rgba(157, 255, 207, 0.6); }
+
+    #check-btn { font-size: 11px; padding: 14px 26px; }
+
+    .puzzle-help {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #7d6c45;
+    }
+
+    /* ---------- TRANSICIÓN DE MAPA ---------- */
+    #fade {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      text-align: center;
+      padding: 0 16px;
+      transition: opacity 1.4s ease;
+    }
+    #fade.show { opacity: 1; pointer-events: auto; }
+    #fade .fade-title, .fin-end .fade-title {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(14px, 3vw, 26px);
+      color: var(--gold-light);
+      text-shadow: 0 0 14px var(--glow);
+      animation: float 4s ease-in-out infinite;
+      line-height: 1.6;
+    }
+    #fade .fade-sub, .fin-end .fade-sub {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(9px, 1.6vw, 12px);
+      color: var(--gold-deep);
+      letter-spacing: 0.2em;
+    }
+
+    /* =====================================================
+       SISTEMA DE COMBATE POR TURNOS
+       ===================================================== */
+    #combat {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      opacity: 0;
+      overflow: hidden;
+      background: #05030a;
+      transition: opacity 0.6s ease;
+    }
+    #combat.on   { display: block; }
+    #combat.show { opacity: 1; }
+    #combat.shake-s { animation: cb-shake-s 0.35s linear; }
+    #combat.shake-l { animation: cb-shake-l 0.55s linear; }
+
+    @keyframes cb-shake-s {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-6px, 3px); }
+      40% { transform: translate(5px, -4px); }
+      60% { transform: translate(-4px, 2px); }
+      80% { transform: translate(3px, -1px); }
+    }
+    @keyframes cb-shake-l {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-14px, 6px); }
+      20% { transform: translate(12px, -8px); }
+      30% { transform: translate(-10px, 4px); }
+      45% { transform: translate(9px, 6px); }
+      60% { transform: translate(-6px, -4px); }
+      75% { transform: translate(4px, 2px); }
+      90% { transform: translate(-2px, -1px); }
+    }
+
+    #cb-bg, #cb-fx {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+    #cb-fx { pointer-events: none; z-index: 3; }
+
+    #cb-stage {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: var(--cb-panel-h);
+      z-index: 2;
+    }
+
+    .cb-unit { position: absolute; }
+    .cb-unit canvas { display: block; image-rendering: pixelated; position: relative; }
+
+    #cb-enemy {
+      right: 11%;
+      top: 15%;
+      width: calc(min(34vw, 340px) * var(--scale, 1));
+    }
+    #cb-enemy .cb-body {
+      position: relative;
+      transform-origin: 50% 100%;
+      animation: breathe 2.4s ease-in-out infinite;
+    }
+    #cb-enemy canvas {
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 0 2px var(--aura, #8a4dff)) drop-shadow(0 0 14px var(--aura, #8a4dff));
+    }
+
+    /* ---------- JEFE: LEXICON GOLEM ---------- */
+    #combat.boss #cb-enemy { right: 7%; top: 3%; width: min(38vw, 46vh, 430px); }
+    #combat.boss #cb-enemy .cb-body { animation-duration: 3.8s; }
+    #combat.boss #cb-enemy::before {
+      bottom: -3%;
+      height: 12%;
+      background: radial-gradient(ellipse at center, rgba(255, 40, 40, 0.35), transparent 70%);
+    }
+
+    .golem-eyes { display: none; position: absolute; inset: 0; pointer-events: none; }
+    #combat.boss .golem-eyes { display: block; }
+    .golem-eyes.off { display: none !important; }
+    .golem-eyes .eye {
+      position: absolute;
+      top: 21.67%;
+      width: 7.14%;
+      height: 3.34%;
+      background: #ff2a2a;
+      box-shadow: 0 0 6px 2px #ff2a2a, 0 0 22px 8px rgba(255, 0, 0, 0.45);
+      animation: eye-pulse 2.2s ease-in-out infinite;
+    }
+    .golem-eyes .eye:first-child { left: 37.5%; }
+    .golem-eyes .eye:last-child  { left: 55.36%; }
+    .golem-eyes[data-phase="2"] .eye { box-shadow: 0 0 7px 3px #ff2a2a, 0 0 26px 10px rgba(255, 0, 0, 0.55); }
+    .golem-eyes[data-phase="3"] .eye { background: #ff5a3a; box-shadow: 0 0 9px 3px #ff5a3a, 0 0 34px 14px rgba(255, 30, 0, 0.65); }
+    .golem-eyes.attack .eye { animation: eye-blink 0.12s steps(2) infinite; }
+    @keyframes eye-pulse { 50% { opacity: 0.55; } }
+    @keyframes eye-blink {
+      0%  { opacity: 1; transform: scale(1.5); }
+      50% { opacity: 0.1; transform: scale(1); }
+    }
+
+    #cb-enemy.slam    { animation: cb-slam 0.8s ease-in-out; }
+    #cb-enemy.crumble { animation: cb-crumble 2.2s ease-in forwards; }
+    @keyframes cb-slam {
+      0%   { transform: none; }
+      35%  { transform: translateY(-6%) scale(1.06); }
+      55%  { transform: translate(-5%, 4%) scale(1.1); }
+      70%  { transform: translate(-5%, 4%) scale(1.1); }
+      100% { transform: none; }
+    }
+    @keyframes cb-crumble {
+      0%   { transform: none; filter: none; opacity: 1; }
+      8%   { transform: translateX(-2%); }
+      16%  { transform: translateX(2%); }
+      24%  { transform: translateX(-2%); filter: brightness(2) saturate(0); }
+      32%  { transform: translateX(1%); }
+      100% { transform: translateY(22%) scaleY(0.55); opacity: 0; filter: brightness(0.4) blur(3px); }
+    }
+
+    .hpbar .seg {
+      display: none;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #000;
+      z-index: 2;
+    }
+    #combat.boss .hpbar .seg { display: block; }
+
+    #cb-banner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 32%;
+      z-index: 6;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      padding: 18px 16px;
+      background: linear-gradient(90deg, transparent, rgba(12, 3, 8, 0.94) 18%, rgba(12, 3, 8, 0.94) 82%, transparent);
+      border-top: 2px solid #b0283a;
+      border-bottom: 2px solid #b0283a;
+    }
+    #cb-banner.show { animation: banner 2.6s ease forwards; }
+    #cb-banner .b-title {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(13px, 2.8vw, 24px);
+      letter-spacing: 0.1em;
+      line-height: 1.5;
+      color: #ffd0d0;
+      text-shadow: 0 0 14px #ff2a2a, 3px 3px 0 #000;
+    }
+    #cb-banner .b-sub { margin-top: 10px; font-size: clamp(14px, 2vw, 18px); color: var(--gold-light); }
+    @keyframes banner {
+      0%   { opacity: 0; transform: scaleY(0); }
+      12%  { opacity: 1; transform: scaleY(1); }
+      85%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    #q-badge {
+      display: none;
+      margin-left: 8px;
+      padding: 4px 6px;
+      font-size: 8px;
+      color: #fff;
+      background: #b0283a;
+      animation: blink 1s steps(2) infinite;
+    }
+    #q-badge.show { display: inline-block; }
+    #cb-enemy::before {
+      content: "";
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: -7%;
+      height: 18%;
+      background: radial-gradient(ellipse at center, rgba(120, 50, 200, 0.5), transparent 70%);
+    }
+
+    #cb-abel {
+      left: 13%;
+      bottom: 7%;
+      height: min(30vh, 230px);
+    }
+    #cb-abel canvas {
+      height: 100%;
+      width: auto;
+      animation: hover 2.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 3px rgba(251, 231, 161, 0.9)) drop-shadow(0 0 16px rgba(227, 179, 65, 0.5));
+    }
+    #cb-abel::before {
+      content: "";
+      position: absolute;
+      left: -30%;
+      right: -30%;
+      bottom: -9%;
+      height: 20%;
+      border-radius: 50%;
+      border: 2px solid rgba(227, 179, 65, 0.55);
+      box-shadow: 0 0 18px rgba(227, 179, 65, 0.45), inset 0 0 14px rgba(227, 179, 65, 0.35);
+      animation: rune-spin 3s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scaleY(1); }
+      50%      { transform: scaleY(1.04) translateY(-1%); }
+    }
+    @keyframes hover {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-5%); }
+    }
+    @keyframes rune-spin {
+      0%, 100% { opacity: 0.6; transform: scaleX(1); }
+      50%      { opacity: 1; transform: scaleX(1.08); }
+    }
+
+    #cb-enemy.hit   { animation: cb-hit 0.6s ease; }
+    #cb-enemy.lunge { animation: cb-lunge 0.75s ease-in-out; }
+    #cb-enemy.dissolve { animation: cb-dissolve 1.5s ease-in forwards; }
+    #cb-abel.dash   { animation: cb-dash 0.95s ease-in-out; }
+    #cb-abel.hurt   { animation: cb-hurt 0.6s ease; }
+    #cb-abel.fallen { animation: cb-fallen 1.4s ease forwards; }
+
+    @keyframes cb-hit {
+      0%   { transform: translateX(0); filter: brightness(1); }
+      12%  { transform: translateX(22px); filter: brightness(5) saturate(0); }
+      28%  { filter: brightness(1); }
+      42%  { transform: translateX(-8px); filter: brightness(4) saturate(0); }
+      60%  { filter: brightness(1); }
+      100% { transform: translateX(0); }
+    }
+    @keyframes cb-lunge {
+      0%   { transform: translate(0, 0) scale(1); }
+      25%  { transform: translate(4vw, -2vh) scale(0.95); }
+      50%  { transform: translate(-42vw, 26vh) scale(1.12); }
+      62%  { transform: translate(-40vw, 24vh) scale(1.12); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes cb-dissolve {
+      0%   { opacity: 1; filter: brightness(1) blur(0); transform: none; }
+      30%  { filter: brightness(4) saturate(0) blur(0); }
+      100% { opacity: 0; filter: brightness(3) blur(6px); transform: translateY(-30px) scaleY(1.3); }
+    }
+    @keyframes cb-dash {
+      0%   { transform: translate(0, 0); }
+      35%  { transform: translate(34vw, -26vh); }
+      60%  { transform: translate(34vw, -26vh); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes cb-hurt {
+      0%, 100% { transform: translateX(0); filter: none; }
+      15% { transform: translateX(-16px); filter: sepia(1) saturate(8) hue-rotate(-50deg); }
+      35% { transform: translateX(10px); filter: none; }
+      55% { transform: translateX(-6px); filter: sepia(1) saturate(8) hue-rotate(-50deg); }
+      75% { transform: translateX(3px); filter: none; }
+    }
+    @keyframes cb-fallen {
+      to { opacity: 0.25; filter: grayscale(1); transform: translateY(14px) rotate(-10deg); }
+    }
+
+    /* Placas de vida */
+    .cb-plate {
+      position: absolute;
+      z-index: 4;
+      width: min(340px, calc(50% - 24px));
+      background: var(--panel);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #000, 0 0 18px rgba(227, 179, 65, 0.2);
+      padding: 10px 12px 12px;
+    }
+    .cb-plate-enemy { top: 16px; left: 16px; border-color: #8a4dff; box-shadow: 0 0 0 3px #000, 0 0 18px rgba(138, 77, 255, 0.3); }
+    .cb-plate-abel  { right: 16px; bottom: calc(var(--cb-panel-h) + 16px); }
+
+    .cb-name {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(8px, 1.4vw, 11px);
+      letter-spacing: 0.08em;
+      color: var(--gold-light);
+    }
+    .cb-name .cb-sub { color: var(--muted); }
+    .cb-name span { white-space: nowrap; }
+    #combat.boss .cb-plate-enemy { width: min(440px, calc(100% - 32px)); border-color: #b0283a; box-shadow: 0 0 0 3px #000, 0 0 22px rgba(255, 40, 40, 0.35); }
+
+    .hp-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+    .hp-label {
+      font-family: "Press Start 2P", monospace;
+      font-size: 8px;
+      color: var(--gold);
+    }
+
+    .hpbar {
+      position: relative;
+      flex: 1;
+      height: 14px;
+      background: #1a0f14;
+      border: 2px solid #000;
+      box-shadow: 0 0 0 1px #5a4a2a;
+      overflow: hidden;
+    }
+    .hp-ghost, .hp-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+    .hp-ghost { background: #fff3d0; transition: width 0.8s ease 0.45s; }
+    .hp-fill {
+      background: linear-gradient(180deg, #ff8a9a 0%, #d42a4a 55%, #8a1028 100%);
+      transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .hp-fill::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 2px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .hpbar.abel .hp-fill { background: linear-gradient(180deg, #fff0b0 0%, #e3b341 55%, #9c7416 100%); }
+    .hpbar.low .hp-fill { animation: low-pulse 0.8s ease-in-out infinite; }
+    .hpbar.instant .hp-fill, .hpbar.instant .hp-ghost { transition: none !important; }
+    @keyframes low-pulse { 50% { filter: brightness(1.8); } }
+
+    .cb-hpnum {
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      color: var(--gold-light);
+      text-align: right;
+      margin-top: 6px;
+    }
+
+    /* Panel inferior: registro + comandos */
+    .cb-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--cb-panel-h);
+      z-index: 4;
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px 16px;
+      background: linear-gradient(180deg, #0d0818, #07040c);
+      border-top: 3px solid var(--gold);
+      box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    #cb-log {
+      flex: 1;
+      min-width: 0;
+      border: 2px solid var(--gold-deep);
+      background: var(--panel);
+      padding: 12px 14px;
+      overflow: hidden;
+    }
+    #cb-log-en { font-size: clamp(15px, 2.1vw, 20px); color: var(--gold-light); line-height: 1.35; }
+    #cb-log-es { font-size: clamp(13px, 1.7vw, 16px); color: var(--muted); margin-top: 6px; line-height: 1.3; }
+
+    #cb-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(330px, 46%);
+    }
+
+    .cb-cmd {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(9px, 1.4vw, 11px);
+      letter-spacing: 0.06em;
+      color: var(--gold-light);
+      background: #1c1408;
+      border: 2px solid var(--gold);
+      padding: 8px 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #000;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+    .cb-cmd .k {
+      flex: none;
+      font-size: 8px;
+      color: var(--gold-deep);
+      border: 1px solid var(--gold-deep);
+      padding: 4px 5px;
+    }
+    .cb-cmd small {
+      display: block;
+      margin-top: 4px;
+      font-family: "Pixelify Sans", monospace;
+      font-size: 13px;
+      letter-spacing: 0;
+      color: var(--muted);
+    }
+    .cb-cmd.strong { border-color: #ffcf5a; box-shadow: 0 3px 0 #000, inset 0 0 10px rgba(255, 207, 90, 0.2); }
+    .cb-cmd:not(:disabled):hover,
+    .cb-cmd:not(:disabled):focus-visible {
+      background: var(--gold);
+      color: #1a1200;
+      outline: none;
+      transform: translateX(4px);
+    }
+    .cb-cmd:not(:disabled):hover small,
+    .cb-cmd:not(:disabled):focus-visible small,
+    .cb-cmd:not(:disabled):hover .k,
+    .cb-cmd:not(:disabled):focus-visible .k { color: #3a2a00; border-color: #3a2a00; }
+    .cb-cmd:disabled { opacity: 0.35; cursor: default; }
+
+    /* Pregunta de inglés */
+    #cb-question {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: var(--cb-panel-h);
+      z-index: 5;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(5, 2, 10, 0.6);
+    }
+    #cb-question.show { display: flex; }
+
+    .q-card {
+      width: min(620px, 100%);
+      background: var(--panel);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #000, 0 0 40px rgba(227, 179, 65, 0.35);
+      padding: 18px 20px 20px;
+      animation: panel-in 0.3s ease-out;
+    }
+
+    .q-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+    }
+    #q-time { font-size: 15px; color: var(--gold-light); }
+
+    .q-timer {
+      height: 10px;
+      margin: 10px 0 14px;
+      background: #1a0f14;
+      border: 2px solid #000;
+      box-shadow: 0 0 0 1px #5a4a2a;
+    }
+    #q-timer-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--gold-deep), var(--gold-light));
+    }
+    #cb-question.urgent #q-timer-fill { background: #ff4d6a; }
+    #cb-question.urgent #q-time { color: #ff4d6a; animation: blink 0.5s steps(2) infinite; }
+
+    .q-prompt { text-align: center; font-size: 14px; color: var(--muted); }
+
+    #q-text {
+      text-align: center;
+      font-size: clamp(18px, 3vw, 26px);
+      line-height: 1.45;
+      color: var(--gold-light);
+      margin: 10px 0 18px;
+    }
+    .blank {
+      display: inline-block;
+      min-width: 4.2em;
+      border-bottom: 3px solid var(--gold);
+      color: var(--gold-deep);
+    }
+    .blank.fill { color: var(--good); border-color: var(--good); text-shadow: 0 0 10px rgba(157, 255, 207, 0.6); }
+
+    #q-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .q-opt {
+      position: relative;
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(10px, 1.7vw, 13px);
+      line-height: 1.5;
+      color: var(--gold-light);
+      background: #1c1408;
+      border: 2px solid var(--gold);
+      padding: 18px 10px 14px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #000;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+    .q-opt .k {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      font-size: 7px;
+      color: var(--gold-deep);
+    }
+    .q-opt:not(:disabled):hover, .q-opt:not(:disabled):focus-visible {
+      background: var(--gold);
+      color: #1a1200;
+      outline: none;
+      transform: translateY(-2px);
+    }
+    .q-opt:disabled { cursor: default; }
+    .q-opt.right { background: #1f4a35; border-color: var(--good); color: #fff; box-shadow: 0 0 16px rgba(157, 255, 207, 0.5); }
+    .q-opt.wrong { background: #4a1520; border-color: #ff6b7a; color: #ffd0d6; }
+    .q-opt.dim   { opacity: 0.3; }
+
+    #q-explain {
+      min-height: 2.8em;
+      margin-top: 14px;
+      text-align: center;
+      font-size: 17px;
+      line-height: 1.3;
+    }
+    #q-explain.good { color: var(--good); }
+    #q-explain.bad  { color: var(--bad); }
+    #q-explain b { font-family: "Press Start 2P", monospace; font-size: 0.7em; }
+    #q-explain small { display: block; margin-top: 4px; font-size: 15px; color: #d4c290; }
+
+    /* Destellos */
+    #cb-flash-gold, #cb-flash-red {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #cb-flash-gold { background: radial-gradient(circle at 70% 35%, rgba(255, 240, 180, 0.95), rgba(227, 179, 65, 0.5) 40%, transparent 75%); }
+    #cb-flash-red  { background: rgba(200, 0, 30, 0.55); box-shadow: inset 0 0 120px rgba(120, 0, 0, 0.9); }
+    #cb-flash-gold.go { animation: gold-flash 0.55s ease-out; }
+    #cb-flash-red.go  { animation: red-flash 0.7s steps(1); }
+    @keyframes gold-flash { 0% { opacity: 0; } 15% { opacity: 0.9; } 100% { opacity: 0; } }
+    @keyframes red-flash {
+      0% { opacity: 0.85; } 18% { opacity: 0; } 34% { opacity: 0.7; } 52% { opacity: 0; } 68% { opacity: 0.4; } 100% { opacity: 0; }
+    }
+
+    /* Números de daño */
+    .dmg {
+      position: absolute;
+      z-index: 6;
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(18px, 3.2vw, 30px);
+      color: var(--gold-light);
+      text-shadow: 3px 3px 0 #000, 0 0 14px var(--gold);
+      pointer-events: none;
+      white-space: nowrap;
+      animation: dmg-up 1.2s ease-out forwards;
+    }
+    .dmg.hurt { color: #ff6b7a; text-shadow: 3px 3px 0 #000, 0 0 14px #ff2a4a; }
+    .dmg small { display: block; text-align: center; font-size: 0.42em; color: var(--good); margin-top: 6px; }
+    @keyframes dmg-up {
+      0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.5); }
+      15%  { opacity: 1; transform: translate(-50%, -70%) scale(1.3); }
+      30%  { transform: translate(-50%, -80%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -190%) scale(1); }
+    }
+
+    /* Resultado */
+    #cb-result {
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.62);
+    }
+    #cb-result.show { display: flex; }
+
+    .r-card {
+      width: min(480px, 100%);
+      text-align: center;
+      background: var(--panel);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #000, 0 0 50px rgba(227, 179, 65, 0.4);
+      padding: 26px 22px 24px;
+      animation: panel-in 0.4s ease-out;
+    }
+    .r-card .title { font-size: clamp(22px, 5vw, 36px); margin-bottom: 0.4em; }
+    .r-card.lose { border-color: #8a1028; box-shadow: 0 0 0 3px #000, 0 0 50px rgba(200, 0, 30, 0.35); }
+    .r-card.lose .title { background: linear-gradient(180deg, #ffb0b8, #d42a4a 60%, #6a0a1a); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 0 10px rgba(212, 42, 74, 0.6)); }
+    .r-sub { font-size: 17px; color: var(--gold-light); margin-bottom: 16px; }
+    .r-sub small { display: block; color: var(--muted); font-size: 0.88em; }
+    .r-lines { margin: 0 auto 14px; max-width: 360px; }
+    .r-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 16px;
+      color: var(--gold-light);
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(156, 116, 22, 0.4);
+      opacity: 0;
+      animation: fade-in 0.4s ease forwards;
+    }
+    .r-line span:last-child { color: var(--good); font-family: "Press Start 2P", monospace; font-size: 11px; }
+    .r-lp {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(14px, 3.4vw, 22px);
+      line-height: 1.5;
+      color: var(--good);
+      text-shadow: 0 0 14px rgba(157, 255, 207, 0.6);
+      margin: 12px 0 20px;
+    }
+    #r-btn { font-size: 11px; padding: 16px 26px; }
+
+    /* =====================================================
+       CINEMÁTICA FINAL DEL REINO 1
+       ===================================================== */
+    #finale {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      opacity: 0;
+      background: #000;
+      transition: opacity 1.2s ease;
+    }
+    #finale.on   { display: block; }
+    #finale.show { opacity: 1; }
+
+    #fin-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .fin-caption {
+      position: absolute;
+      left: 50%;
+      bottom: 11%;
+      transform: translateX(-50%);
+      width: min(820px, calc(100% - 32px));
+      text-align: center;
+      font-size: clamp(16px, 2.4vw, 24px);
+      line-height: 1.4;
+      color: var(--gold-light);
+      text-shadow: 0 0 10px var(--glow), 2px 2px 0 #000;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    .fin-caption small { display: block; margin-top: 6px; font-size: 0.8em; color: var(--muted); }
+    .fin-caption.show { opacity: 1; }
+
+    .fin-title {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 8%;
+      padding: 0 16px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 1.6s ease, transform 1.6s ease;
+    }
+    .fin-title.show { opacity: 1; transform: none; }
+    .fin-title .t1 {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(8px, 1.5vw, 12px);
+      letter-spacing: 0.3em;
+      color: var(--gold);
+    }
+    .fin-title .t2 {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(16px, 3.6vw, 34px);
+      line-height: 1.5;
+      margin-top: 14px;
+      background: linear-gradient(180deg, #ffd0d8 0%, #e0203a 55%, #5a0010 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 12px rgba(224, 32, 58, 0.7));
+    }
+    .fin-title .t3 {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(12px, 2vw, 16px);
+      letter-spacing: 0.3em;
+      color: #ffd0d8;
+      margin-top: 12px;
+    }
+
+    .fin-card {
+      position: absolute;
+      left: 50%;
+      bottom: 5%;
+      transform: translateX(-50%);
+      width: min(560px, calc(100% - 32px));
+      display: none;
+      padding: 18px 20px;
+      text-align: center;
+      background: var(--panel);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #000, 0 0 40px rgba(227, 179, 65, 0.35);
+    }
+    .fin-card.show { display: block; animation: fin-card-in 0.5s ease-out; }
+    @keyframes fin-card-in {
+      from { opacity: 0; transform: translate(-50%, 12px); }
+      to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .fin-cert {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(10px, 1.8vw, 13px);
+      line-height: 1.7;
+      letter-spacing: 0.08em;
+      color: var(--good);
+      margin-bottom: 12px;
+    }
+    .fin-cert small { display: block; font-family: "Pixelify Sans", monospace; font-size: 15px; letter-spacing: 0; color: var(--muted); }
+    .fin-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .fin-stats div {
+      padding: 8px 4px;
+      border: 1px dashed rgba(156, 116, 22, 0.5);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .fin-stats b {
+      display: block;
+      margin-bottom: 6px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 14px;
+      color: var(--gold-light);
+    }
+    #fin-btn { font-size: 11px; padding: 16px 22px; border-color: #e0203a; box-shadow: 0 0 18px rgba(224, 32, 58, 0.5); }
+    #fin-btn:hover, #fin-btn:focus-visible { background: #e0203a; color: #fff; }
+
+    .fin-skip {
+      position: absolute;
+      right: 16px;
+      top: 14px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      color: var(--gold-deep);
+      animation: blink 2.4s ease-in-out infinite;
+    }
+
+    .fin-end {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 0 16px;
+      text-align: center;
+      background: radial-gradient(ellipse at center, #2a0008 0%, #000 70%);
+      opacity: 0;
+      transition: opacity 1.6s ease;
+    }
+    .fin-end.on   { display: flex; }
+    .fin-end.show { opacity: 1; }
+    .fin-end .fade-title { color: #ffd0d8; text-shadow: 0 0 16px rgba(224, 32, 58, 0.8); }
+
+    #fin-flash {
+      position: absolute;
+      inset: 0;
+      background: #fff0f2;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #fin-flash.go { animation: flash 1.4s ease-out; }
+
+    /* ---------- MOVIMIENTO REDUCIDO ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      #intro { -webkit-mask-image: none; mask-image: none; perspective: none; overflow-y: auto; }
+      #crawl-plane { position: relative; transform: translateX(-50%); height: auto; padding: 48px 0 220px; }
+      #crawl { position: static; }
+      #crawl.rolling { animation: none; }
+      #level-msg .main, #fade .fade-title { animation: fade-in 1s ease forwards; }
+      #start-btn { animation: none; box-shadow: 0 0 14px var(--glow); }
+      #combat.shake-s, #combat.shake-l { animation: none; }
+    }
+
+    @media (max-width: 640px) {
+      :root { --cb-panel-h: 230px; }
+      #controls-hint { display: none; }
+      #portrait { width: 52px; height: 52px; }
+      .cb-panel { flex-direction: column; }
+      #cb-menu { width: 100%; flex-direction: row; }
+      #cb-log { flex: 1; }
+      .cb-plate { width: calc(100% - 32px); }
+      .cb-plate-abel { right: 16px; }
+      #cb-enemy { top: 22%; right: 6%; width: calc(48vw * var(--scale, 1)); }
+      #hud-stats { top: auto; bottom: 14px; right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= CINEMÁTICA ================= -->
+  <section id="intro" aria-label="Intro">
+    <div id="crawl-plane">
+      <div id="crawl" class="crawl">
+        <h1 class="title">EVIL-ANGEL</h1>
+
+        <div class="lang-tag">ESPAÑOL</div>
+        <div class="chapter">CAPÍTULO I · LA CAÍDA</div>
+
+        <p>Hubo un tiempo en que Abel custodiaba las puertas del alba, el más luminoso entre los ángeles del Coro Celeste.</p>
+        <p>Pero una pregunta prohibida germinó en su corazón: ¿por qué la luz debe obedecer sin preguntar?</p>
+        <p>Por atreverse a dudar, el Consejo de los Siete lo juzgó traidor. Sus alas fueron quebradas y su nombre, borrado de los cantos eternos.</p>
+        <p>Abel cayó durante siete noches, ardiendo como una estrella herida, hasta estrellarse en el corazón del Whispering Forest, el Bosque de los Susurros, donde los árboles recuerdan cada pecado y las sombras hablan con la voz de los olvidados.</p>
+        <p>Allí, entre raíces antiguas y niebla de ceniza, algo despertó junto a él... una oscuridad que ya conocía su nombre.</p>
+        <p>Ahora Abel debe elegir: recuperar la gracia perdida... o abrazar el poder que le susurra desde la penumbra.</p>
+
+        <div class="ornament">✦✦✦</div>
+
+        <div class="lang-tag">ENGLISH</div>
+        <div class="chapter">CHAPTER I · THE FALL</div>
+
+        <p>There was a time when Abel guarded the gates of dawn, the most radiant among the angels of the Celestial Choir.</p>
+        <p>But a forbidden question took root in his heart: why must the light obey without question?</p>
+        <p>For daring to doubt, the Council of Seven branded him a traitor. His wings were broken, and his name was erased from the eternal hymns.</p>
+        <p>Abel fell for seven nights, burning like a wounded star, until he crashed into the heart of the Whispering Forest, where the trees remember every sin and the shadows speak with the voices of the forgotten.</p>
+        <p>There, among ancient roots and a mist of ash, something awoke beside him... a darkness that already knew his name.</p>
+        <p>Now Abel must choose: reclaim his lost grace... or embrace the power that whispers to him from the gloom.</p>
+
+        <div class="ornament">✦✦✦</div>
+      </div>
+    </div>
+  </section>
+
+  <div id="skip-hint">CLICK / ENTER ▸ SKIP</div>
+
+  <div id="start-wrap">
+    <h1 class="title">EVIL-ANGEL</h1>
+    <button id="start-btn" class="gold-btn" type="button">START GAME</button>
+  </div>
+
+  <div id="level-msg" role="status" aria-live="polite">
+    <div class="label">— SUB-LEVEL 1.1 —</div>
+    <div class="main">Entering Sub-level 1.1:<span>The Awakening</span></div>
+  </div>
+
+  <!-- ================= EXPLORACIÓN ================= -->
+  <div id="game-root">
+    <canvas id="game"></canvas>
+    <div id="vignette"></div>
+
+    <div id="hud">
+      <div class="hud-level" id="hud-level">SUB-LEVEL 1.1 · THE AWAKENING</div>
+      <div class="hud-obj" id="hud-obj">
+        <span class="obj-label">OBJ</span><span id="obj-en"></span>
+        <small id="obj-es"></small>
+      </div>
+    </div>
+
+    <div id="hud-stats">
+      <span id="hud-hp">HP 100/100</span>
+      <span id="hud-lp">LP 0</span>
+    </div>
+
+    <div id="controls-hint">WASD / ← ↑ ↓ → · MOVE</div>
+    <div id="exit-arrow">EAST ▶</div>
+
+    <div id="dialog" role="dialog" aria-live="polite">
+      <canvas id="portrait" width="24" height="24"></canvas>
+      <div class="dlg-body">
+        <div id="dlg-name"></div>
+        <div id="dlg-en"></div>
+        <div id="dlg-es"></div>
+      </div>
+      <div id="dlg-next">▼</div>
+    </div>
+
+    <div id="puzzle" role="dialog" aria-modal="true" aria-labelledby="puzzle-title">
+      <div class="puzzle-panel" id="puzzle-panel">
+        <div class="puzzle-title" id="puzzle-title">UNIT-A.R.C. · LANGUAGE CORE</div>
+        <div class="puzzle-glitch">ERR_SYNTAX // "...is... Unit-A.R.C... robot... a..."</div>
+        <div class="puzzle-sub">
+          Drag the words to repair its language core.
+          <small>Arrastra las palabras para reparar su núcleo de lenguaje.</small>
+        </div>
+        <div class="sentence">
+          <div id="tiles"></div>
+          <span class="period">.</span>
+        </div>
+        <div id="puzzle-feedback" aria-live="assertive"></div>
+        <button id="check-btn" class="gold-btn" type="button">CHECK</button>
+        <div class="puzzle-help">Mouse / touch: drag · Keyboard: Tab + ← →</div>
+      </div>
+    </div>
+
+    <div id="fade">
+      <div class="fade-sub" id="fade-label"></div>
+      <div class="fade-title" id="fade-title"></div>
+      <div class="fade-sub" id="fade-sub"></div>
+    </div>
+  </div>
+
+  <!-- ================= COMBATE ================= -->
+  <div id="combat" aria-hidden="true">
+    <canvas id="cb-bg"></canvas>
+
+    <div id="cb-stage">
+      <div class="cb-unit" id="cb-enemy">
+        <div class="cb-body">
+          <canvas id="cb-enemy-sprite" width="40" height="30"></canvas>
+          <div class="golem-eyes" id="golem-eyes" data-phase="1"><i class="eye"></i><i class="eye"></i></div>
+        </div>
+      </div>
+      <div class="cb-unit" id="cb-abel"><canvas id="cb-abel-sprite" width="12" height="15"></canvas></div>
+    </div>
+
+    <canvas id="cb-fx"></canvas>
+
+    <div class="cb-plate cb-plate-enemy">
+      <div class="cb-name"><span id="cb-enemy-name">MAGIC BEAST</span><span class="cb-sub" id="cb-enemy-lv">Lv.1</span></div>
+      <div class="hp-row">
+        <span class="hp-label">HP</span>
+        <div class="hpbar" id="cb-enemy-bar">
+          <div class="hp-ghost"></div><div class="hp-fill"></div>
+          <i class="seg" style="left:33.33%"></i><i class="seg" style="left:66.66%"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="cb-plate cb-plate-abel">
+      <div class="cb-name"><span>ABEL</span><span class="cb-sub">FALLEN SERAPH</span></div>
+      <div class="hp-row">
+        <span class="hp-label">HP</span>
+        <div class="hpbar abel" id="cb-abel-bar"><div class="hp-ghost"></div><div class="hp-fill"></div></div>
+      </div>
+      <div class="cb-hpnum" id="cb-abel-hpnum">100 / 100</div>
+    </div>
+
+    <div class="cb-panel">
+      <div id="cb-log" aria-live="polite">
+        <div id="cb-log-en"></div>
+        <div id="cb-log-es"></div>
+      </div>
+      <div id="cb-menu">
+        <button class="cb-cmd" data-skill="A1" type="button" disabled>
+          <span class="k">1</span>
+          <span>HOLY WORD<small>A1 · Basic · 17–23 DMG</small></span>
+        </button>
+        <button class="cb-cmd strong" data-skill="A2" type="button" disabled>
+          <span class="k">2</span>
+          <span>SERAPHIM SLASH<small>A2 · Strong · 30–38 DMG · harder</small></span>
+        </button>
+      </div>
+    </div>
+
+    <div id="cb-question" role="dialog" aria-modal="true" aria-labelledby="q-skill">
+      <div class="q-card">
+        <div class="q-head">
+          <span><span id="q-skill">HOLY WORD · A1</span><span id="q-badge">⟲ REVIEW · IRREGULAR VERB</span></span>
+          <span id="q-time">15</span>
+        </div>
+        <div class="q-timer"><div id="q-timer-fill"></div></div>
+        <div class="q-prompt">Choose the correct word · Elige la palabra correcta</div>
+        <div id="q-text"></div>
+        <div id="q-options"></div>
+        <div id="q-explain" aria-live="assertive"></div>
+      </div>
+    </div>
+
+    <div id="cb-banner"><div class="b-title" id="b-title"></div><div class="b-sub" id="b-sub"></div></div>
+
+    <div id="cb-flash-gold"></div>
+    <div id="cb-flash-red"></div>
+
+    <div id="cb-result">
+      <div class="r-card" id="r-card">
+        <div class="title" id="r-title">VICTORY</div>
+        <div class="r-sub" id="r-sub"></div>
+        <div class="r-lines" id="r-lines"></div>
+        <div class="r-lp" id="r-lp"></div>
+        <button id="r-btn" class="gold-btn" type="button">RETURN TO MAP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CINEMÁTICA FINAL ================= -->
+  <div id="finale" aria-hidden="true">
+    <canvas id="fin-canvas" width="320" height="180"></canvas>
+    <div class="fin-skip" id="fin-skip">ENTER ▸ SKIP</div>
+    <div class="fin-title" id="fin-title">
+      <div class="t1">REALM I COMPLETE · REINO 1 COMPLETADO</div>
+      <div class="t2">The Nocturnal<br>Crimson Empire</div>
+      <div class="t3">— B1 —</div>
+    </div>
+    <div class="fin-caption" id="fin-caption" aria-live="polite"></div>
+    <div class="fin-card" id="fin-card">
+      <div class="fin-cert">✦ A2 CERTIFIED · B1 UNLOCKED ✦<small>Certificación A2 superada · Nivel B1 desbloqueado</small></div>
+      <div class="fin-stats" id="fin-stats"></div>
+      <button id="fin-btn" class="gold-btn" type="button">ENTER THE PORTAL ▶</button>
+    </div>
+    <div id="fin-flash"></div>
+    <div class="fin-end" id="fin-end">
+      <div class="fade-sub">— REALM II · REINO 2 —</div>
+      <div class="fade-title">To be continued in<br>The Nocturnal Crimson Empire</div>
+      <div class="fade-sub">B1 · COMING SOON · PRÓXIMAMENTE</div>
+    </div>
+  </div>
+
+  <div id="flash"></div>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+      const shuffle = (arr) => {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      };
+      function restartClass(el, cls) {
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+      }
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6D2B79F5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      /* =====================================================
+         AUDIO 8-BIT PROCEDURAL (WebAudio)
+         ===================================================== */
+      let actx = null;
+      // El navegador bloquea el audio hasta la primera interacción: hasta entonces, silencio
+      let audioUnlocked = false;
+      const unlockAudio = () => { audioUnlocked = true; audio(); };
+      window.addEventListener("pointerdown", unlockAudio, { once: true, capture: true });
+      window.addEventListener("keydown", unlockAudio, { once: true, capture: true });
+
+      function audio() {
+        if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+        if (actx.state === "suspended") actx.resume();
+        return actx;
+      }
+
+      function tone(freq, start, dur, type = "square", vol = 0.12) {
+        if (!audioUnlocked) return;
+        const ac = audio();
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(vol, start + 0.01);
+        gain.gain.setValueAtTime(vol, start + dur * 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(gain).connect(ac.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.02);
+      }
+
+      // Nota con barrido de frecuencia (láser, caída, rugido)
+      function sweep(f1, f2, start, dur, type = "square", vol = 0.08) {
+        if (!audioUnlocked) return;
+        const ac = audio();
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(f1, start);
+        osc.frequency.exponentialRampToValueAtTime(f2, start + dur);
+        gain.gain.setValueAtTime(vol, start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(gain).connect(ac.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.02);
+      }
+
+      function noiseSweep(start, dur, vol = 0.08, from = 400, to = 6000) {
+        if (!audioUnlocked) return;
+        const ac = audio();
+        const buffer = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate);
+        const data = buffer.getChannelData(0);
+        let v = 0;
+        for (let i = 0; i < data.length; i++) {
+          if (i % 6 === 0) v = Math.random() * 2 - 1;
+          data[i] = v;
+        }
+        const src = ac.createBufferSource();
+        src.buffer = buffer;
+        const filter = ac.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(from, start);
+        filter.frequency.exponentialRampToValueAtTime(to, start + dur);
+        const gain = ac.createGain();
+        gain.gain.setValueAtTime(vol, start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        src.connect(filter).connect(gain).connect(ac.destination);
+        src.start(start);
+      }
+
+      const now = () => (audioUnlocked ? audio().currentTime + 0.01 : 0);
+
+      const sfx = {
+        start() {
+          const t = now();
+          [440, 523.25, 659.25, 880, 1046.5, 1318.5].forEach((f, i) => tone(f, t + i * 0.07, 0.12, "square", 0.09));
+          tone(1046.5, t + 0.45, 0.7, "square", 0.07);
+          tone(659.25, t + 0.45, 0.7, "square", 0.05);
+          tone(110, t + 0.45, 0.8, "triangle", 0.25);
+          noiseSweep(t, 0.5, 0.06);
+        },
+        blip()  { if (actx) tone(1567.98, actx.currentTime, 0.05, "square", 0.04); },
+        step()  { tone(70 + Math.random() * 25, now(), 0.05, "triangle", 0.06); },
+        open()  { const t = now(); [523.25, 392, 523.25, 783.99].forEach((f, i) => tone(f, t + i * 0.06, 0.09, "square", 0.06)); noiseSweep(t, 0.25, 0.04, 2000, 300); },
+        pick()  { tone(880, now(), 0.05, "square", 0.05); },
+        drop()  { const t = now(); tone(660, t, 0.04, "square", 0.05); tone(440, t + 0.04, 0.05, "square", 0.04); },
+        wrong() { const t = now(); tone(160, t, 0.16, "sawtooth", 0.06); tone(110, t + 0.17, 0.25, "sawtooth", 0.06); },
+        solve() {
+          const t = now();
+          [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, t + i * 0.08, 0.12, "square", 0.07));
+          tone(130.81, t + 0.56, 0.6, "triangle", 0.2);
+        },
+        type()  { tone(1100 + Math.random() * 300, now(), 0.025, "square", 0.018); },
+        robot() { tone(260 + Math.random() * 220, now(), 0.03, "square", 0.022); },
+        unlock() {
+          const t = now();
+          noiseSweep(t, 1.2, 0.07, 300, 8000);
+          [1318.5, 1046.5, 880, 659.25, 523.25, 440].forEach((f, i) => tone(f, t + i * 0.09, 0.15, "triangle", 0.12));
+          tone(220, t + 0.6, 0.9, "square", 0.05);
+        },
+        exit()  { const t = now(); noiseSweep(t, 1.4, 0.06, 6000, 200); [880, 659.25, 523.25, 440].forEach((f, i) => tone(f, t + i * 0.12, 0.2, "square", 0.05)); },
+
+        // ---- Combate ----
+        encounter() {
+          const t = now();
+          for (let i = 0; i < 10; i++) tone([220, 330, 247, 370][i % 4] * (1 + Math.floor(i / 4) * 0.5), t + i * 0.05, 0.06, "square", 0.06);
+          noiseSweep(t, 0.7, 0.07, 200, 5000);
+          sweep(880, 55, t + 0.4, 0.4, "sawtooth", 0.06);
+        },
+        select()  { const t = now(); tone(988, t, 0.05, "square", 0.05); tone(1319, t + 0.05, 0.07, "square", 0.05); },
+        tick()    { tone(1760, now(), 0.04, "square", 0.04); },
+        correct() { const t = now(); tone(1046.5, t, 0.08, "square", 0.07); tone(1568, t + 0.08, 0.16, "square", 0.07); },
+        miss()    { const t = now(); tone(196, t, 0.14, "square", 0.07); tone(146.8, t + 0.14, 0.3, "square", 0.07); },
+        holy()    { const t = now(); sweep(400, 1800, t, 0.45, "square", 0.05); sweep(600, 2400, t + 0.05, 0.4, "triangle", 0.06); },
+        slash()   { const t = now(); noiseSweep(t, 0.35, 0.12, 8000, 400); sweep(1400, 200, t, 0.3, "sawtooth", 0.06); [1046.5, 1318.5, 1568, 2093].forEach((f, i) => tone(f, t + 0.1 + i * 0.04, 0.12, "square", 0.04)); },
+        impact()  { const t = now(); noiseSweep(t, 0.3, 0.16, 3000, 100); sweep(220, 40, t, 0.3, "square", 0.1); },
+        growl()   { const t = now(); sweep(110, 60, t, 0.45, "sawtooth", 0.09); noiseSweep(t, 0.45, 0.05, 300, 120); },
+        claw()    { const t = now(); for (let i = 0; i < 3; i++) noiseSweep(t + i * 0.08, 0.14, 0.14, 6000, 800); sweep(300, 50, t + 0.2, 0.35, "square", 0.08); },
+        dissolve(){ const t = now(); noiseSweep(t, 1.4, 0.07, 200, 9000); [659.25, 783.99, 987.77, 1318.5].forEach((f, i) => tone(f, t + 0.3 + i * 0.1, 0.25, "triangle", 0.08)); },
+        victory() {
+          const t = now();
+          const mel = [[523.25, 0.12], [523.25, 0.12], [523.25, 0.12], [523.25, 0.36], [415.3, 0.36], [466.16, 0.36], [523.25, 0.24], [466.16, 0.12], [523.25, 0.7]];
+          let o = 0;
+          for (const [f, d] of mel) { tone(f, t + o, d * 0.95, "square", 0.07); tone(f / 2, t + o, d * 0.95, "triangle", 0.12); o += d; }
+        },
+        defeat()  { const t = now(); [392, 349.23, 311.13, 261.63].forEach((f, i) => tone(f, t + i * 0.32, 0.4, "triangle", 0.12)); sweep(130, 40, t + 1.3, 1.2, "square", 0.05); },
+        coin()    { const t = now(); tone(1975.5, t, 0.04, "square", 0.035); tone(2637, t + 0.04, 0.06, "square", 0.035); },
+
+        // ---- Jefe y cinemática final ----
+        golemType() { tone(70 + Math.random() * 30, now(), 0.06, "square", 0.04); },
+        roar()    { const t = now(); sweep(95, 38, t, 1, "sawtooth", 0.12); sweep(190, 60, t, 1, "square", 0.05); noiseSweep(t, 1, 0.09, 260, 70); },
+        rockfall(){ const t = now(); for (let i = 0; i < 5; i++) noiseSweep(t + i * 0.06, 0.18, 0.12, 1400, 100); sweep(120, 40, t + 0.2, 0.3, "square", 0.1); },
+        crush()   {
+          const t = now();
+          noiseSweep(t, 0.7, 0.2, 2200, 50);
+          sweep(220, 28, t, 0.7, "square", 0.14);
+          [392, 311.1, 233.1, 155.6].forEach((f, i) => tone(f, t + 0.1 + i * 0.09, 0.14, "sawtooth", 0.06));
+        },
+        crumble() { const t = now(); for (let i = 0; i < 12; i++) noiseSweep(t + i * 0.13, 0.32, 0.1, 900 - i * 50, 70); sweep(80, 30, t, 1.8, "sawtooth", 0.08); },
+        wings()   {
+          const t = now();
+          [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568, 2093].forEach((f, i) => { tone(f, t + i * 0.16, 0.5, "triangle", 0.07); tone(f * 2, t + i * 0.16 + 0.05, 0.2, "square", 0.015); });
+          noiseSweep(t, 2.2, 0.025, 5000, 12000);
+        },
+        portal()  { const t = now(); sweep(40, 130, t, 3.2, "sawtooth", 0.06); noiseSweep(t, 3.2, 0.05, 90, 900); },
+        fanfare() {
+          const t = now();
+          const mel = [[392, 0.28], [523.25, 0.28], [659.25, 0.28], [783.99, 0.56], [659.25, 0.28], [783.99, 1.3]];
+          let o = 0;
+          for (const [f, d] of mel) {
+            tone(f, t + o, d * 0.95, "square", 0.06);
+            tone(f * 1.5, t + o, d * 0.95, "triangle", 0.04);
+            tone(f / 2, t + o, d * 0.95, "triangle", 0.12);
+            o += d;
+          }
+        },
+        portalEnter() { const t = now(); noiseSweep(t, 1.6, 0.1, 100, 9000); sweep(90, 2200, t, 1.6, "square", 0.05); },
+      };
+
+      // Música de combate procedural: bestias (La menor, 150 BPM) y jefe (Re menor, 128 BPM, con bombo)
+      const MUSIC = {
+        beast: {
+          bpm: 150,
+          bass: [110, 110, 220, 110, 98, 98, 196, 98, 87.31, 87.31, 174.6, 87.31, 82.41, 82.41, 164.8, 103.8],
+          lead: [440, 0, 523.25, 0, 659.25, 0, 523.25, 0, 392, 0, 493.88, 0, 587.33, 0, 493.88, 0,
+                 349.23, 0, 440, 0, 523.25, 0, 440, 0, 329.63, 0, 415.3, 0, 493.88, 0, 415.3, 0],
+          kick: false,
+        },
+        boss: {
+          bpm: 128,
+          bass: [73.42, 73.42, 146.8, 73.42, 73.42, 87.31, 73.42, 65.41, 58.27, 58.27, 116.5, 58.27, 65.41, 65.41, 130.8, 69.3],
+          lead: [293.7, 0, 0, 349.2, 0, 440, 0, 415.3, 0, 349.2, 0, 293.7, 0, 277.2, 0, 0,
+                 233.1, 0, 0, 293.7, 0, 349.2, 0, 329.6, 0, 293.7, 0, 261.6, 0, 277.2, 0, 0],
+          kick: true,
+        },
+      };
+
+      const battleMusic = {
+        timer: null,
+        start(kind = "beast") {
+          this.stop();
+          if (!audioUnlocked) return;
+          const ac = audio();
+          const song = MUSIC[kind];
+          const s = 60 / song.bpm / 2; // corcheas
+          const { bass, lead } = song;
+          let step = 0;
+          let next = ac.currentTime + 0.15;
+          this.timer = setInterval(() => {
+            while (next < ac.currentTime + 0.25) {
+              tone(bass[step % 16], next, s * 0.85, "triangle", 0.1);
+              const l = lead[step % 32];
+              if (l) tone(l * 2, next, s * 0.5, "square", 0.018);
+              if (song.kick && step % 4 === 0) sweep(160, 40, next, 0.14, "sine", 0.22);
+              if (step % 4 === 2) noiseSweep(next, 0.05, 0.03, 6000, 7000);
+              step++;
+              next += s;
+            }
+          }, 60);
+        },
+        stop() { clearInterval(this.timer); this.timer = null; },
+      };
+
+      /* =====================================================
+         ARTE COMPARTIDO: SPRITES DE ABEL Y BESTIAS
+         ===================================================== */
+      const PLAYER_W = 12, PLAYER_H = 15;
+      const ABEL_PAL = {
+        H: "#f4f1ea", h: "#c9c4d6", S: "#f0c9a8", E: "#3b2a4a",
+        R: "#ece6d6", r: "#bdb4a0", G: "#e3b341", W: "#9aa0b4", L: "#6b5a48",
+      };
+      const BODY = {
+        down: [
+          "....HHHH....", "...HHHHHH...", "..HHHHHHHH..", "..HSSSSSSH..", "..HSESSESH..",
+          "..HSSSSSSH..", "..hHSSSSHh..", ".WWRRRRRRWW.", "WW.RRGGRR.WW", ".W.RRRRRR.W.",
+          "..SRRRRRRS..", "...RRRRRR...", "...RrRRrR...", "...RRRRRR...",
+        ],
+        up: [
+          "....HHHH....", "...HHHHHH...", "..HHHHHHHH..", "..HHHHHHHH..", "..HHHHHHHH..",
+          "..hHHHHHHh..", "..hhHHHHhh..", ".WWRRRRRRWW.", "WWWRRRRRRWWW", ".WWRRRRRRWW.",
+          "..SRRRRRRS..", "...RRRRRR...", "...RRrrRR...", "...RRRRRR...",
+        ],
+        right: [
+          "....HHHH....", "...HHHHHH...", "..HHHHHHHH..", "..HHHHSSSS..", "..HHHHSSES..",
+          "..HHHSSSSS..", "..hHHhSSS...", "..WWRRRRR...", ".WW.RRGGR...", ".W..RRRRRS..",
+          "....RRRRR...", "....RRRRR...", "....RrRRR...", "....RRRRR...",
+        ],
+      };
+      const FEET = {
+        down:  ["...LL..LL...", "..LL...LL...", "...LL...LL.."],
+        up:    ["...LL..LL...", "..LL...LL...", "...LL...LL.."],
+        right: ["....LLLL....", "...LL...LL..", ".....LL....."],
+      };
+
+      function buildSprite(rows, flip) {
+        const c = document.createElement("canvas");
+        c.width = PLAYER_W; c.height = PLAYER_H;
+        const x = c.getContext("2d");
+        rows.forEach((row, ry) => {
+          for (let cx = 0; cx < row.length; cx++) {
+            const ch = row[cx];
+            if (ch === ".") continue;
+            x.fillStyle = ABEL_PAL[ch];
+            x.fillRect(flip ? PLAYER_W - 1 - cx : cx, ry, 1, 1);
+          }
+        });
+        return c;
+      }
+
+      const SPRITES = {};
+      for (const dir of ["down", "up", "right"]) SPRITES[dir] = FEET[dir].map((f) => buildSprite([...BODY[dir], f], false));
+      SPRITES.left = FEET.right.map((f) => buildSprite([...BODY.right, f], true));
+
+      // Bestias Mágicas del Sub-nivel 1.2
+      const BEASTS = {
+        umbral: {
+          name: "Umbral Wolf", nameEs: "Lobo Umbrío", lv: 2, hp: 80, lp: 30, atk: 15, scale: 1, aura: "#8a4dff",
+          pal: { body: "#2a1f3d", shade: "#1a1228", hi: "#4a3a6a", mane: "#3a2a55", eye: "#ff3b5c", claw: "#d9d0e8" },
+        },
+        fang: {
+          name: "Hollow Fang", nameEs: "Colmillo Hueco", lv: 3, hp: 100, lp: 40, atk: 17, scale: 1.08, aura: "#3dffb0",
+          pal: { body: "#1d3330", shade: "#10201e", hi: "#2f5250", mane: "#244240", eye: "#7dffb0", claw: "#e0f0e8" },
+        },
+        alpha: {
+          name: "Howling Alpha", nameEs: "Alfa Aullador", lv: 5, hp: 130, lp: 60, atk: 20, scale: 1.25, aura: "#ff4d6a", horns: true,
+          pal: { body: "#2a1418", shade: "#170a0d", hi: "#4a2228", mane: "#3d1a20", eye: "#ffcf5a", claw: "#f0e0d0" },
+        },
+      };
+
+      // Bestia grande (pantalla de combate), 40x30 píxeles, mirando a la izquierda
+      function drawBeastBig(c, pal, horns) {
+        const P = (col, x, y, w, h) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+        c.clearRect(0, 0, 40, 30);
+        P(pal.mane, 33, 9, 4, 3); P(pal.mane, 36, 6, 3, 4); P(pal.mane, 38, 3, 2, 4);          // cola
+        P(pal.shade, 29, 19, 3, 9); P(pal.shade, 16, 19, 3, 9);                                 // patas lejanas
+        P(pal.body, 12, 10, 22, 11); P(pal.hi, 14, 10, 18, 2); P(pal.shade, 14, 19, 19, 2);     // cuerpo
+        P(pal.mane, 14, 7, 3, 3); P(pal.mane, 19, 4, 3, 6); P(pal.mane, 24, 5, 3, 5); P(pal.mane, 29, 7, 3, 3);
+        P(pal.hi, 20, 4, 1, 2); P(pal.hi, 25, 5, 1, 2);
+        P(pal.body, 12, 20, 4, 8); P(pal.body, 26, 20, 4, 8); P(pal.hi, 12, 20, 1, 6); P(pal.hi, 26, 20, 1, 6);
+        for (const cx of [11, 13, 15, 25, 27, 29]) P(pal.claw, cx, 28, 1, 1);                   // garras
+        P(pal.body, 3, 8, 12, 9); P(pal.body, 0, 12, 5, 4); P(pal.hi, 5, 8, 8, 1); P(pal.shade, 3, 16, 10, 1); // cabeza
+        P(pal.body, 8, 4, 3, 4); P(pal.body, 12, 5, 2, 3); P(pal.mane, 9, 5, 1, 2);             // orejas
+        if (horns) { P("#d9c9a8", 6, 2, 2, 6); P("#d9c9a8", 5, 1, 1, 2); P("#d9c9a8", 13, 2, 2, 4); P("#d9c9a8", 14, 1, 1, 2); }
+        P(pal.eye, 5, 10, 3, 2); P("#ffffff", 6, 10, 1, 1);                                     // ojo
+        P("#0a0510", 0, 15, 7, 2); P("#f0e8ff", 1, 15, 1, 1); P("#f0e8ff", 3, 15, 1, 1); P("#f0e8ff", 5, 16, 1, 1);
+        P("#0a0510", 0, 12, 1, 1);
+      }
+
+      // Bestia pequeña (mapa), 20x14 píxeles
+      function drawBeastSmall(c, x, y, t, pal, flip, horns) {
+        c.save();
+        c.translate(flip ? x + 20 : x, y);
+        if (flip) c.scale(-1, 1);
+        const P = (col, a, b, w, h) => { c.fillStyle = col; c.fillRect(a, b, w, h); };
+        const k = ((t * 5) | 0) % 2;
+        c.globalAlpha = 0.35; P("#000", 2, 13, 16, 2); c.globalAlpha = 1;
+        P(pal.mane, 17, 3, 2, 3);
+        P(pal.body, 6, 5, 11, 5); P(pal.hi, 7, 5, 9, 1);
+        P(pal.mane, 8, 3, 2, 2); P(pal.mane, 11, 2, 2, 3); P(pal.mane, 14, 3, 2, 2);
+        P(pal.body, 1, 4, 6, 5); P(pal.body, 0, 6, 2, 2); P(pal.body, 3, 2, 2, 2);
+        if (horns) { P("#d9c9a8", 2, 0, 1, 3); P("#d9c9a8", 5, 1, 1, 2); }
+        P(pal.eye, 2, 5, 2, 1);
+        P(pal.shade, 6, 10, 2, 3 - k); P(pal.body, 9, 10, 2, 2 + k); P(pal.shade, 13, 10, 2, 2 + k); P(pal.body, 15, 10, 2, 3 - k);
+        c.restore();
+      }
+
+      /* =====================================================
+         BANCO DE PREGUNTAS (Mecánica Pedagógica)
+         A1 = Holy Word (básico) · A2 = Seraphim Slash (avanzado)
+         ===================================================== */
+      const QUESTIONS = {
+        A1: [
+          { q: "The beasts ___ howling in the dark.", o: ["is", "are", "am"], a: 1, ex: "«Beasts» es plural (they) → are." },
+          { q: "I ___ an angel of light.", o: ["am", "is", "are"], a: 0, ex: "Con «I» siempre usamos am." },
+          { q: "Abel ___ very brave.", o: ["are", "am", "is"], a: 2, ex: "Abel = he (3.ª persona singular) → is." },
+          { q: "This is ___ old forest.", o: ["a", "an", "two"], a: 1, ex: "«Old» empieza por sonido vocálico → an." },
+          { q: "The robot ___ a red light on its head.", o: ["have", "has", "having"], a: 1, ex: "3.ª persona singular (it) → has." },
+          { q: "We ___ not afraid of the dark.", o: ["is", "am", "are"], a: 2, ex: "Con «we» usamos are." },
+          { q: "The wolf ___ in the forest.", o: ["lives", "live", "living"], a: 0, ex: "Presente simple, 3.ª persona singular → verbo + -s." },
+          { q: "Look! ___ is a magic beast.", o: ["They", "It", "We"], a: 1, ex: "Una sola bestia (singular) → It is." },
+          { q: "There ___ three moons tonight.", o: ["is", "are", "am"], a: 1, ex: "«Three moons» es plural → there are." },
+          { q: "My wings ___ broken.", o: ["is", "am", "are"], a: 2, ex: "«Wings» es plural → are." },
+          { q: "He ___ like the shadows.", o: ["don't", "doesn't", "isn't"], a: 1, ex: "Negativo en 3.ª persona singular → doesn't + verbo." },
+          { q: "___ you see the light?", o: ["Does", "Do", "Is"], a: 1, ex: "Pregunta en presente simple con «you» → Do." },
+        ],
+        A2: [
+          { q: "Yesterday, Abel ___ from the sky.", o: ["fell", "falled", "falls"], a: 0, ex: "«Fall» es irregular: fall → fell (pasado)." },
+          { q: "The beast ___ here since midnight.", o: ["has been", "have been", "is been"], a: 0, ex: "Present perfect + since; 3.ª persona → has been." },
+          { q: "This wolf is ___ than the last one.", o: ["more strong", "stronger", "strongest"], a: 1, ex: "Adjetivo corto → comparativo con -er + than." },
+          { q: "If I ___ my wings, I would fly home.", o: ["had", "have", "has"], a: 0, ex: "Segundo condicional: If + pasado simple, would + verbo." },
+          { q: "The seal was broken ___ the robot.", o: ["from", "by", "with"], a: 1, ex: "En pasiva, quien realiza la acción va con «by»." },
+          { q: "I have never ___ such darkness.", o: ["saw", "see", "seen"], a: 2, ex: "Present perfect: have + participio (see → seen)." },
+          { q: "Abel was walking ___ the forest when it attacked.", o: ["through", "on", "at"], a: 0, ex: "«Through» = a través de un espacio (bosque, túnel)." },
+          { q: "They ___ the trees whispering last night.", o: ["hear", "heared", "heard"], a: 2, ex: "«Hear» es irregular: hear → heard." },
+          { q: "This is the ___ night of the year.", o: ["darker", "darkest", "most dark"], a: 1, ex: "Superlativo de adjetivo corto: the + -est." },
+          { q: "You ___ fight the beast alone. It's too dangerous.", o: ["shouldn't", "should to", "don't should"], a: 0, ex: "Modal should/shouldn't + verbo sin «to»." },
+          { q: "By tomorrow, we ___ the forest.", o: ["will left", "will have left", "have leave"], a: 1, ex: "Futuro perfecto: will have + participio." },
+          { q: "The beasts were ___ by the holy light.", o: ["frighten", "frightening", "frightened"], a: 2, ex: "Pasiva: be + participio → frightened." },
+        ],
+      };
+
+      /* =====================================================
+         JEFE FINAL DEL REINO 1: LEXICON GOLEM
+         ===================================================== */
+      const GOLEM = {
+        boss: true, name: "Lexicon Golem", nameEs: "Gólem del Léxico", lv: 10,
+        hp: 300, phaseHp: 100, lp: 200, atk: [14, 16, 18], scale: 1, aura: "#ff3b3b",
+      };
+
+      const PHASES = {
+        1: { roman: "I",   en: "SURVIVAL VOCABULARY",           es: "Fase I · Vocabulario de supervivencia" },
+        2: { roman: "II",  en: "PRONOUNS & POSSESSIVES",        es: "Fase II · Pronombres y posesivos" },
+        3: { roman: "III", en: "PAST SIMPLE & IRREGULAR VERBS", es: "Fase III · Pasado simple y verbos irregulares" },
+      };
+
+      // Las preguntas con irr:true son verbos irregulares: fallarlas activa GRAMMAR CRUSH
+      const BOSS_QUESTIONS = {
+        1: [
+          { q: "I am thirsty. I need some ___.", o: ["water", "bread", "fire"], a: 0, ex: "«Thirsty» = sediento → water (agua)." },
+          { q: "It's cold and dark. Let's make a ___.", o: ["river", "fire", "knife"], a: 1, ex: "Para calentarse e iluminar: fire (fuego)." },
+          { q: "I'm lost! Can you show me the ___?", o: ["way", "food", "rain"], a: 0, ex: "«Show me the way» = muéstrame el camino." },
+          { q: "He is hurt. Call a ___!", o: ["baker", "teacher", "doctor"], a: 2, ex: "Herido (hurt) → doctor." },
+          { q: "It's raining. We need a ___ to sleep.", o: ["shelter", "sword", "song"], a: 0, ex: "Shelter = refugio." },
+          { q: "I am very hungry. Is there any ___?", o: ["wood", "food", "smoke"], a: 1, ex: "Hungry = hambriento → food (comida)." },
+          { q: "___! A beast is behind you!", o: ["Good night", "Watch out", "Excuse me"], a: 1, ex: "«Watch out!» = ¡Cuidado! (aviso de peligro)." },
+          { q: "Help! I can't ___. The water is deep.", o: ["swim", "sing", "sleep"], a: 0, ex: "Swim = nadar." },
+          { q: "Use the ___ to find the north.", o: ["blanket", "compass", "spoon"], a: 1, ex: "Compass = brújula." },
+          { q: "I feel sick. I need some ___.", o: ["medicine", "money", "music"], a: 0, ex: "Sick = enfermo → medicine (medicina)." },
+        ],
+        2: [
+          { q: "This is Abel. ___ wings are broken.", o: ["Her", "His", "Their"], a: 1, ex: "Abel es masculino singular → his." },
+          { q: "The golem is huge. ___ eyes are red.", o: ["It's", "Its", "Their"], a: 1, ex: "«Its» es posesivo (sin apóstrofo). «It's» = it is." },
+          { q: "Unit-A.R.C. helped ___.", o: ["me", "I", "my"], a: 0, ex: "Después del verbo va el pronombre objeto → me." },
+          { q: "These swords are ___. Give them back!", o: ["our", "ours", "us"], a: 1, ex: "Sin sustantivo detrás → pronombre posesivo: ours." },
+          { q: "The wolves protect ___ cubs.", o: ["there", "they're", "their"], a: 2, ex: "Posesivo de «they» → their. (there = allí, they're = they are)." },
+          { q: "Is this map ___ or mine?", o: ["yours", "your", "you"], a: 0, ex: "Sin sustantivo detrás → yours." },
+          { q: "___ and I are friends.", o: ["Him", "His", "He"], a: 2, ex: "Sujeto de la frase → pronombre sujeto: he." },
+          { q: "The angel looked at ___ in the lake.", o: ["him", "himself", "his"], a: 1, ex: "Sujeto y objeto son la misma persona → reflexivo: himself." },
+          { q: "This is not my book. It's ___.", o: ["hers", "her", "she"], a: 0, ex: "Sin sustantivo detrás → hers." },
+          { q: "Give ___ the key, please. We need it.", o: ["we", "our", "us"], a: 2, ex: "Pronombre objeto de «we» → us." },
+        ],
+        3: [
+          { q: "Last night, Abel ___ into the cave.", o: ["went", "goed", "gone"], a: 0, irr: true, verb: "go", ex: "go → went → gone. Pasado simple: went." },
+          { q: "We ___ to the ruins two days ago.", o: ["go", "went", "goes"], a: 1, irr: true, verb: "go", ex: "«Ago» indica pasado → went (go → went)." },
+          { q: "I ___ a shadow in the trees yesterday.", o: ["seed", "seen", "saw"], a: 2, irr: true, verb: "see", ex: "see → saw → seen. Pasado simple: saw." },
+          { q: "They ___ the golem move!", o: ["saw", "see", "seen"], a: 0, irr: true, verb: "see", ex: "Acción terminada en el pasado → saw." },
+          { q: "The golem ___ the crystal from the altar.", o: ["taked", "took", "taken"], a: 1, irr: true, verb: "take", ex: "take → took → taken. Pasado simple: took." },
+          { q: "She ___ the map with her last week.", o: ["took", "take", "taken"], a: 0, irr: true, verb: "take", ex: "«Last week» → pasado: took." },
+          { q: "The council ___ his wings.", o: ["breaked", "broken", "broke"], a: 2, irr: true, verb: "break", ex: "break → broke → broken. Pasado simple: broke." },
+          { q: "Who ___ the seal last night?", o: ["broke", "break", "broken"], a: 0, irr: true, verb: "break", ex: "Pasado simple de break → broke." },
+          { q: "The elders ___ the spell long ago.", o: ["writed", "wrote", "written"], a: 1, irr: true, verb: "write", ex: "write → wrote → written. Pasado simple: wrote." },
+          { q: "Abel ___ his name on the stone.", o: ["wrote", "writes", "written"], a: 0, irr: true, verb: "write", ex: "Pasado simple de write → wrote." },
+          { q: "Once, Abel ___ above the clouds.", o: ["flied", "flew", "flown"], a: 1, irr: true, verb: "fly", ex: "fly → flew → flown. Pasado simple: flew." },
+          { q: "The bats ___ out of the tower.", o: ["flew", "fly", "flown"], a: 0, irr: true, verb: "fly", ex: "Pasado simple de fly → flew." },
+          { q: "I ___ the beast was asleep.", o: ["thinked", "thought", "thinks"], a: 1, irr: true, verb: "think", ex: "think → thought → thought." },
+          { q: "We ___ it was a friendly golem!", o: ["thought", "think", "thinked"], a: 0, irr: true, verb: "think", ex: "Pasado simple de think → thought." },
+          { q: "The golem ___ the heavy door.", o: ["opened", "open", "opend"], a: 0, ex: "Verbo regular: open + -ed → opened." },
+          { q: "Yesterday we ___ for hours.", o: ["walk", "walked", "walkt"], a: 1, ex: "Verbo regular: walk + -ed → walked." },
+          { q: "___ you find the key?", o: ["Do", "Does", "Did"], a: 2, ex: "Pregunta en pasado → Did + verbo en forma base." },
+          { q: "He didn't ___ the answer.", o: ["knew", "know", "known"], a: 1, ex: "Tras didn't, el verbo va en forma base → know." },
+        ],
+      };
+
+      // Gólem de bloques de piedra, 56x60 píxeles (los ojos se dibujan aparte para poder parpadear)
+      function renderGolem(phase) {
+        const c = document.createElement("canvas");
+        c.width = 56; c.height = 60;
+        const x = c.getContext("2d");
+        const P = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+        const S = "#6b6f78", HI = "#8a8f99", DK = "#474b54", DP = "#2e3138", MOSS = "#3d5a3a";
+        const RUNE = ["#6a1a22", "#b0283a", "#ff3b3b"][phase - 1];
+
+        // piernas y pies
+        P(DK, 17, 46, 9, 10); P(DK, 30, 46, 9, 10); P(S, 17, 46, 3, 10); P(S, 30, 46, 3, 10);
+        P(DP, 15, 55, 13, 5); P(DP, 28, 55, 13, 5); P(DK, 15, 55, 13, 1); P(DK, 28, 55, 13, 1);
+        // torso
+        P(S, 15, 21, 26, 24); P(HI, 15, 21, 26, 2); P(DK, 15, 40, 26, 5); P(DP, 37, 23, 4, 20);
+        P(DP, 17, 42, 22, 3);
+        // hombros
+        P(S, 3, 18, 15, 13); P(HI, 3, 18, 15, 2); P(DK, 3, 28, 15, 3);
+        P(S, 38, 18, 15, 13); P(HI, 38, 18, 15, 2); P(DK, 38, 28, 15, 3);
+        // brazos y puños
+        P(DK, 3, 31, 10, 12); P(S, 3, 31, 3, 12); P(DK, 43, 31, 10, 12); P(S, 43, 31, 3, 12);
+        P(S, 1, 43, 13, 11); P(HI, 1, 43, 13, 2); P(DP, 1, 52, 13, 2); P(DP, 5, 45, 1, 6); P(DP, 9, 45, 1, 6);
+        P(S, 42, 43, 13, 11); P(HI, 42, 43, 13, 2); P(DP, 42, 52, 13, 2); P(DP, 46, 45, 1, 6); P(DP, 50, 45, 1, 6);
+        // cabeza
+        P(S, 18, 4, 20, 17); P(HI, 18, 4, 20, 2); P(DK, 18, 17, 20, 4); P(DP, 35, 6, 3, 13);
+        P(DP, 19, 10, 18, 2);                                   // ceja de piedra
+        P("#120a0c", 20, 12, 6, 4); P("#120a0c", 30, 12, 6, 4); // cuencas
+        P(DP, 21, 18, 14, 2);
+        for (let i = 0; i < 4; i++) P(HI, 22 + i * 3, 18, 1, 1); // dientes
+        // musgo
+        P(MOSS, 5, 18, 5, 1); P(MOSS, 6, 19, 2, 1); P(MOSS, 44, 18, 6, 1); P(MOSS, 48, 19, 2, 2); P(MOSS, 20, 21, 4, 1);
+        // juntas entre bloques
+        for (const [sx, sy, sw] of [[15, 27, 22], [15, 33, 22], [3, 24, 15], [38, 24, 15], [18, 8, 17], [1, 48, 13], [42, 48, 13]]) P(DP, sx, sy, sw, 1);
+        for (const [sx, sy, sh] of [[24, 21, 6], [31, 27, 6], [20, 33, 7], [34, 33, 7], [10, 18, 6], [46, 18, 6]]) P(DP, sx, sy, 1, sh);
+        // runa del pecho (una «A» tallada) y runas de hombros
+        for (const [a, b] of [[27, 25], [28, 25], [26, 26], [29, 26], [25, 27], [30, 27], [25, 28], [26, 28], [27, 28], [28, 28],
+                              [29, 28], [30, 28], [25, 29], [30, 29], [25, 30], [30, 30]]) P(RUNE, a, b, 1, 1);
+        P(RUNE, 9, 22, 1, 3); P(RUNE, 8, 23, 3, 1); P(RUNE, 46, 22, 1, 3); P(RUNE, 45, 23, 3, 1);
+        // grietas que brillan más en cada fase
+        if (phase >= 2) {
+          for (const [a, b] of [[22, 22], [23, 23], [23, 24], [24, 25], [22, 36], [21, 37], [21, 38], [20, 39], [26, 6], [27, 7], [27, 8], [28, 9]]) P(RUNE, a, b, 1, 1);
+        }
+        if (phase >= 3) {
+          for (const [a, b] of [[34, 22], [33, 23], [33, 24], [32, 25], [33, 26], [36, 34], [37, 35], [38, 36], [6, 44], [7, 45], [7, 46],
+                                [48, 26], [49, 27], [50, 27], [30, 5], [31, 6], [12, 34], [11, 35]]) P(RUNE, a, b, 1, 1);
+          x.clearRect(50, 18, 3, 4); x.clearRect(3, 18, 3, 2); // trozos arrancados
+        }
+        return c;
+      }
+      const GOLEM_IMG = { 1: renderGolem(1), 2: renderGolem(2), 3: renderGolem(3) };
+
+      /* =====================================================
+         SISTEMA DE COMBATE POR TURNOS
+         ===================================================== */
+      const Combat = (() => {
+        const TIME_LIMIT = 15000;   // 15 segundos por pregunta
+        const SWIFT_MS = 5000;      // responder en <5 s = +25% de daño
+
+        const el = $("combat");
+        const bg = $("cb-bg"), bgc = bg.getContext("2d");
+        const fxc = $("cb-fx"), fx = fxc.getContext("2d");
+        const enemyEl = $("cb-enemy"), abelEl = $("cb-abel");
+        const enemySprite = $("cb-enemy-sprite"), abelSprite = $("cb-abel-sprite");
+        const enemyBar = $("cb-enemy-bar"), abelBar = $("cb-abel-bar"), abelHpNum = $("cb-abel-hpnum");
+        const logEn = $("cb-log-en"), logEs = $("cb-log-es");
+        const cmdBtns = [...document.querySelectorAll(".cb-cmd")];
+        const qWrap = $("cb-question"), qSkill = $("q-skill"), qTime = $("q-time"), qFill = $("q-timer-fill");
+        const qText = $("q-text"), qOpts = $("q-options"), qExplain = $("q-explain");
+        const flashGold = $("cb-flash-gold"), flashRed = $("cb-flash-red");
+        const resultEl = $("cb-result"), rCard = $("r-card"), rTitle = $("r-title"), rSub = $("r-sub");
+        const rLines = $("r-lines"), rLp = $("r-lp"), rBtn = $("r-btn");
+        const eyesEl = $("golem-eyes"), bannerEl = $("cb-banner"), qBadge = $("q-badge");
+
+        let active = false, phase = "off";
+        let def = null, opts = null;
+        const enemy = { hp: 0, max: 0 };
+        const abel = { hp: 0, max: 0 };
+        let tally = { correct: 0, wrong: 0, taken: 0 };
+        let effects = [], parts = [];
+        let dpr = 1, lastTs = 0;
+        let pendingAnswer = null;
+        const decks = { A1: [], A2: [] };
+
+        // Estado del jefe
+        let boss = false, bossPhase = 1, pendingPhase = false;
+        let forceIrregular = false, lastFailedVerb = null, lastQuestion = null;
+        let usedBoss = new Set();
+
+        function nextQuestion(skill) {
+          if (!decks[skill].length) decks[skill] = shuffle(QUESTIONS[skill].slice());
+          return decks[skill].pop();
+        }
+
+        // Mecánica adaptativa: tras fallar un verbo irregular, la siguiente pregunta vuelve a ser
+        // de verbos irregulares (preferentemente del mismo verbo) hasta que se acierte una.
+        function nextBossQuestion() {
+          if (forceIrregular) {
+            const pool = BOSS_QUESTIONS[3].filter((q) => q.irr && q !== lastQuestion);
+            const sameVerb = pool.filter((q) => q.verb === lastFailedVerb && !usedBoss.has(q));
+            const unused = pool.filter((q) => !usedBoss.has(q));
+            const from = sameVerb.length ? sameVerb : unused.length ? unused : pool;
+            const q = from[(Math.random() * from.length) | 0];
+            usedBoss.add(q);
+            return q;
+          }
+          const key = "P" + bossPhase;
+          if (!decks[key] || !decks[key].length) decks[key] = shuffle(BOSS_QUESTIONS[bossPhase].slice());
+          let q = decks[key].pop();
+          while (usedBoss.has(q) && decks[key].length) q = decks[key].pop(); // no repetir las ya usadas en repasos
+          usedBoss.add(q);
+          return q;
+        }
+
+        function drawEnemy() {
+          const ctx = enemySprite.getContext("2d");
+          if (boss) {
+            enemySprite.width = 56; enemySprite.height = 60;
+            ctx.drawImage(GOLEM_IMG[bossPhase], 0, 0);
+          } else {
+            enemySprite.width = 40; enemySprite.height = 30;
+            drawBeastBig(ctx, def.pal, def.horns);
+          }
+        }
+
+        function showBanner(title, sub) {
+          $("b-title").textContent = title;
+          $("b-sub").textContent = sub;
+          restartClass(bannerEl, "show");
+        }
+
+        /* ---------- Fondo pixel art del campo de batalla ---------- */
+        const scenery = document.createElement("canvas");
+        scenery.width = 320; scenery.height = 180;
+        (() => {
+          const c = scenery.getContext("2d");
+          const r = mulberry32(99);
+          const P = (col, x, y, w, h) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+          const bands = ["#06030c", "#0a0614", "#0f081c", "#140a24", "#1a0d2c", "#211034"];
+          bands.forEach((col, i) => {
+            P(col, 0, i * 19, 320, 19);
+            if (i) for (let x = 0; x < 320; x += 2) P(col, x + ((i % 2)), i * 19 - 1, 1, 1); // tramado
+          });
+          for (let i = 0; i < 70; i++) P(r() < 0.8 ? "#8a7aa8" : "#fbe7a1", r() * 320 | 0, r() * 90 | 0, 1, 1);
+          // Luna con halo
+          for (let ring = 3; ring >= 1; ring--) {
+            c.globalAlpha = 0.07 * ring;
+            c.fillStyle = "#c9b8ff";
+            c.beginPath(); c.arc(248, 38, 16 + ring * 7, 0, Math.PI * 2); c.fill();
+          }
+          c.globalAlpha = 1;
+          for (let dy = -15; dy <= 15; dy++) for (let dx = -15; dx <= 15; dx++) {
+            if (dx * dx + dy * dy <= 225) P(dx * dx + dy * dy > 170 ? "#cfc4ea" : "#efe8ff", 248 + dx, 38 + dy, 1, 1);
+          }
+          P("#c2b6df", 242, 33, 4, 3); P("#c2b6df", 252, 42, 5, 3); P("#c2b6df", 246, 45, 2, 2);
+          // Siluetas de árboles lejanos y cercanos
+          for (let x = -4; x < 324; x += 7) {
+            const h = 34 + r() * 30 | 0;
+            for (let k = 0; k < h; k += 4) {
+              const w = Math.max(1, 9 - (k / h) * 9 | 0);
+              P("#120a1c", x - (w >> 1), 112 - k, w, 4);
+            }
+          }
+          const bigTree = (x, h) => {
+            P("#08040e", x - 3, 120 - h, 6, h);
+            for (let k = 0; k < 60; k += 5) { const w = Math.max(2, 34 - k * 0.5 | 0); P("#0a0512", x - (w >> 1), 120 - h - 10 + k * 0.9 | 0, w, 5); }
+          };
+          bigTree(12, 70); bigTree(40, 55); bigTree(292, 74); bigTree(314, 58);
+          // Suelo con perspectiva
+          P("#150e1e", 0, 112, 320, 68);
+          let y = 114;
+          for (let i = 1; y < 180; i++) { P("#1c1328", 0, y, 320, 1); y += i * 2; }
+          for (let i = 0; i < 160; i++) {
+            const gx = r() * 320 | 0, gy = 114 + r() * 66 | 0;
+            P(r() < 0.5 ? "#2a2040" : "#22301f", gx, gy, 1, 2);
+          }
+          // Banda de niebla
+          for (let i = 0; i < 6; i++) { c.globalAlpha = 0.05; P("#a080d0", 0, 100 + i * 3, 320, 8); }
+          c.globalAlpha = 1;
+        })();
+
+        function resize() {
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          const w = Math.floor(window.innerWidth * dpr), h = Math.floor(window.innerHeight * dpr);
+          bg.width = fxc.width = w;
+          bg.height = fxc.height = h;
+          bgc.imageSmoothingEnabled = false;
+          const s = Math.max(w / 320, h / 180);
+          bgc.drawImage(scenery, (w - 320 * s) / 2, (h - 180 * s) / 2, 320 * s, 180 * s);
+        }
+        window.addEventListener("resize", () => { if (active) resize(); });
+
+        /* ---------- Motor de efectos (canvas fx) ---------- */
+        function addEffect(dur, draw, onEnd, delay = 0) { effects.push({ t: 0, dur, draw, onEnd, delay }); }
+
+        function burst(pt, n, colors, speed = 260, opt = {}) {
+          for (let i = 0; i < n; i++) {
+            const a = Math.random() * Math.PI * 2, v = (0.3 + Math.random()) * speed * dpr;
+            parts.push({
+              x: pt.x, y: pt.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - (opt.up || 0) * dpr,
+              life: 0.5 + Math.random() * 0.6, max: 1.1, c: colors[(Math.random() * colors.length) | 0],
+              s: (2 + Math.random() * 3) * dpr, grav: (opt.grav ?? 300) * dpr, add: opt.add !== false,
+            });
+          }
+        }
+
+        function center(node, fx0 = 0.5, fy0 = 0.5) {
+          const r = node.getBoundingClientRect();
+          return { x: (r.left + r.width * fx0) * dpr, y: (r.top + r.height * fy0) * dpr };
+        }
+
+        function loop(ts) {
+          if (!active) return;
+          const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
+          lastTs = ts;
+          fx.setTransform(1, 0, 0, 1, 0, 0);
+          fx.clearRect(0, 0, fxc.width, fxc.height);
+
+          // Motas de sombra ambientales
+          if (Math.random() < dt * 12) {
+            parts.push({ x: Math.random() * fxc.width, y: fxc.height * (0.55 + Math.random() * 0.3), vx: (Math.random() - 0.5) * 10 * dpr,
+                         vy: -(15 + Math.random() * 25) * dpr, life: 3, max: 3, c: Math.random() < 0.5 ? "#7a4dcc" : "#3dffb0",
+                         s: 2 * dpr, grav: 0, add: true, ambient: true });
+          }
+
+          const cur = effects;
+          effects = [];
+          for (const e of cur) {
+            if (e.delay > 0) { e.delay -= dt; effects.push(e); continue; }
+            e.t += dt;
+            const p = Math.min(1, e.t / e.dur);
+            fx.save(); e.draw(fx, p); fx.restore();
+            if (p >= 1) { if (e.onEnd) e.onEnd(); } else effects.push(e);
+          }
+
+          parts = parts.filter((p) => (p.life -= dt) > 0);
+          for (const p of parts) {
+            p.vy += p.grav * dt;
+            p.x += p.vx * dt; p.y += p.vy * dt;
+            fx.globalCompositeOperation = p.add ? "lighter" : "source-over";
+            fx.globalAlpha = Math.min(1, p.life / p.max * (p.ambient ? 0.5 : 1.4));
+            fx.fillStyle = p.c;
+            fx.fillRect(p.x | 0, p.y | 0, p.s, p.s);
+          }
+          fx.globalAlpha = 1;
+          fx.globalCompositeOperation = "source-over";
+          requestAnimationFrame(loop);
+        }
+
+        const GOLD = ["#fff6d0", "#fbe7a1", "#e3b341", "#ffffff"];
+
+        // Holy Word: la palabra correcta vuela como un orbe dorado hasta la bestia
+        function fxHolyWord(word) {
+          return new Promise((done) => {
+            const a = center(abelEl, 0.6, 0.35), b = center(enemyEl, 0.35, 0.45);
+            sfx.holy();
+            addEffect(0.55, (c, p) => {
+              const e = p * p;
+              const x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e - Math.sin(p * Math.PI) * 80 * dpr;
+              const r = 26 * dpr;
+              c.globalCompositeOperation = "lighter";
+              const gr = c.createRadialGradient(x, y, 0, x, y, r);
+              gr.addColorStop(0, "rgba(255,250,220,1)");
+              gr.addColorStop(0.35, "rgba(251,231,161,0.8)");
+              gr.addColorStop(1, "rgba(227,179,65,0)");
+              c.fillStyle = gr;
+              c.fillRect(x - r, y - r, r * 2, r * 2);
+              c.font = `${12 * dpr}px "Press Start 2P", monospace`;
+              c.textAlign = "center";
+              c.fillStyle = "#fff6d0";
+              c.fillText(word, x, y - 30 * dpr);
+              parts.push({ x, y, vx: (Math.random() - 0.5) * 60 * dpr, vy: (Math.random() - 0.5) * 60 * dpr, life: 0.4, max: 0.4,
+                           c: GOLD[(Math.random() * 4) | 0], s: 3 * dpr, grav: 0, add: true });
+            }, () => {
+              burst(b, 55, GOLD, 300);
+              addEffect(0.5, (c, p) => {
+                c.strokeStyle = `rgba(255,236,170,${1 - p})`;
+                c.lineWidth = (8 * (1 - p) + 1) * dpr;
+                c.beginPath(); c.arc(b.x, b.y, (20 + p * 140) * dpr, 0, Math.PI * 2); c.stroke();
+              });
+              done();
+            });
+          });
+        }
+
+        // Seraphim Slash: pilar de luz + tajo en media luna
+        function fxSeraphim(word) {
+          return new Promise((done) => {
+            const b = center(enemyEl, 0.45, 0.5);
+            sfx.slash();
+            addEffect(0.75, (c, p) => {
+              const w = (50 + 50 * Math.sin(p * Math.PI)) * dpr;
+              const gr = c.createLinearGradient(0, 0, 0, b.y + 60 * dpr);
+              gr.addColorStop(0, "rgba(255,240,180,0)");
+              gr.addColorStop(1, `rgba(255,240,180,${0.75 * Math.sin(p * Math.PI)})`);
+              c.globalCompositeOperation = "lighter";
+              c.fillStyle = gr;
+              c.fillRect(b.x - w / 2, 0, w, b.y + 60 * dpr);
+            });
+            addEffect(0.4, (c, p) => {
+              const q = Math.min(1, p * 1.7);
+              c.globalCompositeOperation = "lighter";
+              c.lineCap = "round";
+              c.shadowColor = "#e3b341";
+              c.shadowBlur = 24 * dpr;
+              c.strokeStyle = `rgba(255,244,200,${1 - p * 0.5})`;
+              c.lineWidth = (18 * (1 - p) + 3) * dpr;
+              const R = 130 * dpr, start = Math.PI * 0.75;
+              c.beginPath(); c.arc(b.x + 40 * dpr, b.y - 30 * dpr, R, start, start + Math.PI * 0.95 * q); c.stroke();
+              c.strokeStyle = `rgba(255,255,255,${1 - p})`;
+              c.lineWidth = 4 * dpr;
+              c.beginPath(); c.arc(b.x + 40 * dpr, b.y - 30 * dpr, R, start, start + Math.PI * 0.95 * q); c.stroke();
+            }, () => {
+              burst(b, 90, GOLD, 380, { up: 80 });
+              addEffect(0.9, (c, p) => {
+                c.globalAlpha = 1 - p;
+                c.font = `${18 * dpr}px "Press Start 2P", monospace`;
+                c.textAlign = "center";
+                c.fillStyle = "#fff6d0";
+                c.shadowColor = "#e3b341";
+                c.shadowBlur = 16 * dpr;
+                c.fillText(word.toUpperCase(), b.x, b.y - (60 + p * 40) * dpr);
+              });
+              done();
+            }, 0.15);
+          });
+        }
+
+        // Zarpazo de sombras: tres garras sobre Abel
+        function fxClaw() {
+          const a = center(abelEl, 0.5, 0.45);
+          for (let i = 0; i < 3; i++) {
+            addEffect(0.5, (c, p) => {
+              const q = Math.min(1, p * 2.4);
+              const off = (i - 1) * 26 * dpr;
+              const x1 = a.x + 60 * dpr + off, y1 = a.y - 80 * dpr;
+              const x2 = a.x - 60 * dpr + off, y2 = a.y + 80 * dpr;
+              const xe = x1 + (x2 - x1) * q, ye = y1 + (y2 - y1) * q;
+              c.lineCap = "round";
+              c.strokeStyle = `rgba(30,0,25,${0.9 * (1 - p)})`;
+              c.lineWidth = 16 * dpr;
+              c.beginPath(); c.moveTo(x1, y1); c.lineTo(xe, ye); c.stroke();
+              c.globalCompositeOperation = "lighter";
+              c.strokeStyle = `rgba(255,50,90,${1 - p})`;
+              c.lineWidth = 5 * dpr;
+              c.beginPath(); c.moveTo(x1, y1); c.lineTo(xe, ye); c.stroke();
+            }, null, i * 0.08);
+          }
+          setTimeout(() => {
+            burst(a, 30, ["#ff3b5c", "#8a1028"], 220);
+            burst(a, 35, ["#1a0a1e", "#2a0f2e", "#000000"], 200, { add: false });
+          }, 200);
+        }
+
+        const STONE = ["#8a8f99", "#6b6f78", "#474b54", "#2e3138"];
+
+        // Puño de piedra: lluvia de rocas sobre Abel
+        function fxRocks() {
+          const a = center(abelEl, 0.5, 0.55);
+          for (let i = 0; i < 7; i++) {
+            const ox = (Math.random() - 0.5) * 170 * dpr;
+            const size = (10 + Math.random() * 16) * dpr;
+            addEffect(0.45, (c, p) => {
+              const y = -40 * dpr + (a.y + 40 * dpr) * p * p;
+              c.fillStyle = "#6b6f78";
+              c.fillRect(a.x + ox - size / 2, y - size / 2, size, size);
+              c.fillStyle = "#8a8f99";
+              c.fillRect(a.x + ox - size / 2, y - size / 2, size, size / 5);
+              c.fillStyle = "#2e3138";
+              c.fillRect(a.x + ox - size / 2, y + size / 4, size, size / 4);
+            }, () => burst({ x: a.x + ox, y: a.y }, 8, STONE, 170, { add: false }), i * 0.06);
+          }
+        }
+
+        // GRAMMAR CRUSH: la forma correcta del verbo cae letra a letra como bloques de piedra
+        function fxGrammarCrush(word) {
+          const a = center(abelEl, 0.5, 0.45);
+          const letters = word.toUpperCase().replace(/\s+/g, "").split("");
+          const size = Math.min(40, 260 / letters.length) * dpr;
+          const step = size * 1.12;
+          const x0 = a.x - (letters.length * step) / 2 + size / 2;
+          letters.forEach((ch, i) => {
+            const x = x0 + i * step;
+            addEffect(0.5, (c, p) => {
+              const y = -size + (a.y + size) * p * p;
+              c.fillStyle = "#5b5f68"; c.fillRect(x - size / 2, y - size / 2, size, size);
+              c.fillStyle = "#8a8f99"; c.fillRect(x - size / 2, y - size / 2, size, 4 * dpr);
+              c.fillStyle = "#2e3138"; c.fillRect(x - size / 2, y + size / 2 - 4 * dpr, size, 4 * dpr);
+              c.font = `${Math.round(size * 0.5)}px "Press Start 2P", monospace`;
+              c.textAlign = "center";
+              c.textBaseline = "middle";
+              c.shadowColor = "#ff0000";
+              c.shadowBlur = 10 * dpr;
+              c.fillStyle = "#ff3b3b";
+              c.fillText(ch, x, y + dpr);
+            }, () => burst({ x, y: a.y + size / 2 }, 10, STONE, 210, { add: false }), i * 0.09);
+          });
+          // La palabra correcta queda grabada un momento sobre Abel
+          addEffect(1.6, (c, p) => {
+            c.globalAlpha = p < 0.2 ? p / 0.2 : 1 - (p - 0.2) / 0.8;
+            c.font = `${20 * dpr}px "Press Start 2P", monospace`;
+            c.textAlign = "center";
+            c.shadowColor = "#ff2a2a";
+            c.shadowBlur = 18 * dpr;
+            c.fillStyle = "#ffd0d0";
+            c.fillText(word, a.x, a.y - 110 * dpr);
+          }, null, letters.length * 0.09 + 0.4);
+        }
+
+        /* ---------- Interfaz ---------- */
+        let logToken = 0;
+        function log(en, es = "", pause = 450) {
+          const my = ++logToken;
+          logEs.textContent = "";
+          logEn.textContent = "";
+          return new Promise((res) => {
+            let n = 0;
+            const iv = setInterval(() => {
+              if (my !== logToken) { clearInterval(iv); res(); return; }
+              n += 2;
+              logEn.textContent = en.slice(0, n);
+              if (n >= en.length) {
+                clearInterval(iv);
+                logEn.textContent = en;
+                logEs.textContent = es;
+                setTimeout(res, pause);
+              }
+            }, 16);
+          });
+        }
+
+        function setBar(bar, ratio, instant) {
+          if (instant) bar.classList.add("instant");
+          const pct = Math.max(0, ratio) * 100 + "%";
+          bar.querySelector(".hp-fill").style.width = pct;
+          bar.querySelector(".hp-ghost").style.width = pct;
+          bar.classList.toggle("low", ratio <= 0.3);
+          if (instant) { void bar.offsetWidth; bar.classList.remove("instant"); }
+        }
+
+        let numAnim = 0;
+        function animateAbelNum(from, to) {
+          const my = ++numAnim, t0 = performance.now();
+          const stepFn = (ts) => {
+            if (my !== numAnim) return;
+            const p = Math.min(1, (ts - t0) / 600);
+            abelHpNum.textContent = `${Math.round(from + (to - from) * p)} / ${abel.max}`;
+            if (p < 1) requestAnimationFrame(stepFn);
+          };
+          requestAnimationFrame(stepFn);
+        }
+
+        function popDamage(target, n, { hurt = false, tag = "" } = {}) {
+          const r = target.getBoundingClientRect();
+          const d = document.createElement("div");
+          d.className = "dmg" + (hurt ? " hurt" : "");
+          d.innerHTML = `-${n}${tag ? `<small>${tag}</small>` : ""}`;
+          d.style.left = r.left + r.width / 2 + "px";
+          d.style.top = r.top + r.height * 0.3 + "px";
+          el.appendChild(d);
+          setTimeout(() => d.remove(), 1300);
+        }
+
+        function setMenu(on) {
+          cmdBtns.forEach((b) => (b.disabled = !on));
+          if (on) setTimeout(() => cmdBtns[0].focus({ preventScroll: true }), 50);
+        }
+
+        const blankHtml = (text, fill) =>
+          text.replace("___", fill ? `<span class="blank fill">${fill}</span>` : `<span class="blank">______</span>`);
+
+        /* ---------- Pregunta con temporizador ---------- */
+        function askQuestion(q, skill, review = false) {
+          return new Promise((resolve) => {
+            const skillName = skill === "A1" ? "✦ HOLY WORD · A1" : "✦ SERAPHIM SLASH · A2";
+            qSkill.textContent = boss ? `${skillName} · PHASE ${PHASES[bossPhase].roman}` : skillName;
+            qBadge.classList.toggle("show", review);
+            qText.innerHTML = blankHtml(q.q);
+            qExplain.textContent = "";
+            qExplain.className = "";
+            qOpts.innerHTML = "";
+            shuffle([0, 1, 2]).forEach((oi, idx) => {
+              const b = document.createElement("button");
+              b.type = "button";
+              b.className = "q-opt";
+              b.dataset.oi = oi;
+              b.innerHTML = `<span class="k">${idx + 1}</span>${q.o[oi]}`;
+              b.addEventListener("click", () => answer(oi));
+              qOpts.appendChild(b);
+            });
+            qWrap.classList.remove("urgent");
+            qWrap.classList.add("show");
+            setTimeout(() => qOpts.firstElementChild && qOpts.firstElementChild.focus({ preventScroll: true }), 80);
+
+            const t0 = performance.now();
+            let done = false, lastSec = 16;
+            const tick = () => {
+              if (done) return;
+              const left = Math.max(0, TIME_LIMIT - (performance.now() - t0));
+              qFill.style.width = (left / TIME_LIMIT) * 100 + "%";
+              const sec = Math.ceil(left / 1000);
+              if (sec !== lastSec) {
+                lastSec = sec;
+                qTime.textContent = sec;
+                if (sec <= 5 && sec > 0) { sfx.tick(); qWrap.classList.add("urgent"); }
+              }
+              if (left <= 0) { answer(-1); return; }
+              requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+            pendingAnswer = answer;
+
+            function answer(oi) {
+              if (done) return;
+              done = true;
+              pendingAnswer = null;
+              const ms = performance.now() - t0;
+              const correct = oi === q.a;
+              [...qOpts.children].forEach((b) => {
+                b.disabled = true;
+                const v = +b.dataset.oi;
+                b.classList.add(v === q.a ? "right" : v === oi ? "wrong" : "dim");
+              });
+              qText.innerHTML = blankHtml(q.q, q.o[q.a]);
+              if (correct) {
+                sfx.correct();
+                qExplain.className = "good";
+                qExplain.innerHTML = `✔ Correct! ${ms < SWIFT_MS ? "<b>SWIFT +25%</b>" : ""}<small>${q.ex}</small>`;
+              } else {
+                sfx.miss();
+                qExplain.className = "bad";
+                qExplain.innerHTML = `${oi < 0 ? "⌛ Time's up! · ¡Se acabó el tiempo!" : "✖ Wrong! · ¡Incorrecto!"} → <b>${q.o[q.a]}</b><small>${q.ex}</small>`;
+              }
+              setTimeout(() => {
+                qWrap.classList.remove("show", "urgent");
+                resolve({ correct, ms, timeout: oi < 0 });
+              }, correct ? 1300 : 2900);
+            }
+          });
+        }
+
+        /* ---------- Flujo del combate ---------- */
+        function playerTurn() {
+          phase = "menu";
+          log("What will Abel do?", "¿Qué hará Abel? · Pulsa 1 o 2", 0);
+          setMenu(true);
+        }
+
+        async function choose(skill) {
+          if (phase !== "menu") return;
+          phase = "question";
+          setMenu(false);
+          sfx.select();
+          const review = boss && forceIrregular;
+          const q = boss ? nextBossQuestion() : nextQuestion(skill);
+          lastQuestion = q;
+          if (review) {
+            await log("The Golem demands a review: IRREGULAR VERBS!", "El Gólem exige un repaso: ¡VERBOS IRREGULARES!", 250);
+          } else {
+            await log(skill === "A1" ? "Abel gathers the Holy Word..." : "Abel raises his blade of light...",
+                      skill === "A1" ? "Abel reúne la Palabra Sagrada..." : "Abel alza su espada de luz...", 150);
+          }
+          const res = await askQuestion(q, skill, review);
+          if (res.correct) {
+            if (review) {           // error corregido: se levanta la obligación de repasar
+              forceIrregular = false;
+              lastFailedVerb = null;
+              tally.reviewed++;
+            }
+            await playerAttack(skill, res, q.o[q.a]);
+          } else {
+            await enemyAttack(skill, res, q);
+          }
+
+          if (abel.hp <= 0) return defeat();
+          if (enemy.hp <= 0) return victory();
+          if (pendingPhase) await phaseTransition();
+          playerTurn();
+        }
+
+        async function phaseTransition() {
+          pendingPhase = false;
+          bossPhase++;
+          const ph = PHASES[bossPhase];
+          sfx.roar();
+          eyesEl.classList.add("attack");
+          restartClass(el, "shake-l");
+          restartClass(flashRed, "go");
+          drawEnemy();                          // aparecen nuevas grietas
+          eyesEl.dataset.phase = bossPhase;
+          burst(center(enemyEl, 0.5, 0.4), 50, STONE, 320, { add: false, up: 150 });
+          burst(center(enemyEl, 0.5, 0.4), 30, ["#ff3b3b", "#ff9a7a"], 260);
+          $("cb-enemy-lv").textContent = `PHASE ${ph.roman}/III`;
+          showBanner(`PHASE ${ph.roman} · ${ph.en}`, ph.es);
+          await wait(2700);
+          eyesEl.classList.remove("attack");
+          const lines = {
+            2: ["CRACKS ONLY MAKE ME STRONGER. WHOSE WORDS ARE THESE... YOURS OR MINE?",
+                "LAS GRIETAS SOLO ME HACEN MÁS FUERTE. ¿DE QUIÉN SON ESTAS PALABRAS... TUYAS O MÍAS?"],
+            3: ["ENOUGH! THE PAST WILL BURY YOU, ANGEL!", "¡BASTA! ¡EL PASADO TE ENTERRARÁ, ÁNGEL!"],
+          };
+          await log(lines[bossPhase][0], lines[bossPhase][1], 1100);
+        }
+
+        async function playerAttack(skill, res, word) {
+          phase = "anim";
+          tally.correct++;
+          const swift = res.ms < SWIFT_MS;
+          let dmg = skill === "A1" ? rnd(17, 23) : rnd(30, 38);
+          if (swift) dmg = Math.round(dmg * 1.25);
+
+          if (skill === "A1") {
+            log("Abel speaks the HOLY WORD!", "¡Abel pronuncia la PALABRA SAGRADA!", 0);
+            await fxHolyWord(word);
+          } else {
+            log("SERAPHIM SLASH!", "¡TAJO SERAFÍN!", 0);
+            restartClass(abelEl, "dash");
+            await wait(330);
+            await fxSeraphim(word);
+          }
+
+          // Impacto: temblor + destello dorado + daño
+          sfx.impact();
+          restartClass(el, skill === "A1" ? "shake-s" : "shake-l");
+          restartClass(flashGold, "go");
+          restartClass(enemyEl, "hit");
+          popDamage(enemyEl, dmg, { tag: swift ? "SWIFT!" : "" });
+          // El jefe no puede perder más vida de la que le queda en la fase actual
+          const floor = boss ? (3 - bossPhase) * def.phaseHp : 0;
+          enemy.hp = Math.max(floor, enemy.hp - dmg);
+          if (boss && enemy.hp === floor && bossPhase < 3) pendingPhase = true;
+          setBar(enemyBar, enemy.hp / enemy.max);
+          await wait(750);
+          if (enemy.hp > 0 && !pendingPhase) await log(`The ${def.name} staggers!`, `¡${def.nameEs} se tambalea!`, 350);
+        }
+
+        async function golemAttack(skill, res, q) {
+          const base = rnd(def.atk[bossPhase - 1] - 2, def.atk[bossPhase - 1] + 2) + (skill === "A2" ? 6 : 0);
+          const crush = !!q.irr;
+          const dmg = crush ? base * 2 : base;   // GRAMMAR CRUSH = doble daño
+          eyesEl.classList.add("attack");        // los ojos parpadean al atacar
+
+          if (crush) {
+            await log("GRAMMAR CRUSH!", "¡GRAMMAR CRUSH! · ¡Doble daño!", 100);
+            sfx.roar();
+            restartClass(enemyEl, "slam");
+            await wait(420);
+            fxGrammarCrush(q.o[q.a]);
+            await wait(250 + q.o[q.a].length * 90);
+            sfx.crush();
+          } else {
+            await log(res.timeout ? "Too slow! The Golem's fist comes down!" : "The Lexicon Golem uses STONE FIST!",
+                      res.timeout ? "¡Demasiado lento! El puño del Gólem cae sobre ti." : "¡El Gólem del Léxico usa PUÑO DE PIEDRA!", 150);
+            restartClass(enemyEl, "slam");
+            await wait(420);
+            fxRocks();
+            sfx.rockfall();
+            await wait(320);
+          }
+
+          restartClass(flashRed, "go");
+          restartClass(el, "shake-l");
+          restartClass(abelEl, "hurt");
+          popDamage(abelEl, dmg, { hurt: true, tag: crush ? "×2 CRUSH" : "" });
+          const before = abel.hp;
+          abel.hp = Math.max(0, abel.hp - dmg);
+          tally.taken += dmg;
+          setBar(abelBar, abel.hp / abel.max);
+          animateAbelNum(before, abel.hp);
+          await wait(900);
+          eyesEl.classList.remove("attack");
+
+          if (crush) {
+            forceIrregular = true;
+            lastFailedVerb = q.verb;
+            tally.crushes++;
+          }
+          if (crush && abel.hp > 0) {
+            showBanner("⟲ REVIEW · IRREGULAR VERB", "La siguiente pregunta volverá a evaluar un verbo irregular");
+            await log("The Golem will test an irregular verb again!", "¡El Gólem volverá a evaluarte un verbo irregular!", 1400);
+          }
+        }
+
+        async function enemyAttack(skill, res, q) {
+          phase = "anim";
+          tally.wrong++;
+          if (boss) return golemAttack(skill, res, q);
+          const dmg = rnd(def.atk - 3, def.atk + 3) + (skill === "A2" ? 7 : 0); // fallar el ataque fuerte cuesta más
+          await log(res.timeout ? `Too slow! The ${def.name} lunges from the shadows!` : `The ${def.name} uses SHADOW CLAW!`,
+                    res.timeout ? `¡Demasiado lento! ${def.nameEs} salta desde las sombras.` : `¡${def.nameEs} usa ZARPAZO DE SOMBRAS!`, 150);
+          sfx.growl();
+          restartClass(enemyEl, "lunge");
+          await wait(340);
+          fxClaw();
+          sfx.claw();
+          restartClass(flashRed, "go");
+          restartClass(el, "shake-l");
+          restartClass(abelEl, "hurt");
+          popDamage(abelEl, dmg, { hurt: true });
+          const before = abel.hp;
+          abel.hp = Math.max(0, abel.hp - dmg);
+          tally.taken += dmg;
+          setBar(abelBar, abel.hp / abel.max);
+          animateAbelNum(before, abel.hp);
+          await wait(900);
+        }
+
+        async function bossVictory() {
+          phase = "end";
+          battleMusic.stop();
+          await wait(250);
+          eyesEl.classList.add("attack");
+          sfx.roar();
+          await log("N-NO... MY WORDS... ARE... YOURS NOW...", "N-NO... MIS PALABRAS... AHORA... SON TUYAS...", 600);
+          eyesEl.classList.add("off");
+          restartClass(enemyEl, "crumble");
+          sfx.crumble();
+          for (let i = 0; i < 6; i++) {
+            setTimeout(() => burst(center(enemyEl, 0.2 + Math.random() * 0.6, 0.3 + Math.random() * 0.6), 26, STONE, 240, { add: false, up: 60 }), i * 280);
+          }
+          setTimeout(() => burst(center(enemyEl, 0.5, 0.4), 90, ["#ff3b3b", "#fbe7a1", "#ffffff"], 300, { up: 120, grav: -30 }), 1500);
+          await log("The Lexicon Golem crumbles into silent letters...", "El Gólem del Léxico se desmorona en letras silenciosas...", 1300);
+          sfx.victory();
+
+          const total = tally.correct + tally.wrong;
+          const accuracy = total ? Math.round((tally.correct / total) * 100) : 100;
+          const answerBonus = tally.correct * 5;
+          const reviewBonus = tally.reviewed * 10;
+          const lp = def.lp + answerBonus + reviewBonus;
+          const lines = [[`${def.name} defeated`, def.lp], [`Correct answers ×${tally.correct}`, answerBonus]];
+          if (reviewBonus) lines.push([`Irregular verbs mastered ×${tally.reviewed}`, reviewBonus]);
+          showResult(true, lines, lp, {
+            title: "CERTIFIED",
+            sub: `Accuracy ${accuracy}% · Grammar Crushes survived: ${tally.crushes}<small>Precisión ${accuracy}% · Has resistido ${tally.crushes} Grammar Crush</small>`,
+            btn: "CONTINUE",
+            extra: { accuracy, correct: tally.correct, reviewed: tally.reviewed, crushes: tally.crushes },
+          });
+        }
+
+        async function victory() {
+          if (boss) return bossVictory();
+          phase = "end";
+          battleMusic.stop();
+          await wait(250);
+          restartClass(enemyEl, "dissolve");
+          sfx.dissolve();
+          burst(center(enemyEl), 120, [def.aura, "#ffffff", "#fbe7a1"], 260, { up: 120, grav: -40 });
+          await log(`The ${def.name} dissolves into the mist!`, `¡${def.nameEs} se disuelve en la niebla!`, 700);
+          sfx.victory();
+
+          const answerBonus = tally.correct * 5;
+          const flawless = tally.taken === 0 ? 20 : 0;
+          const lp = def.lp + answerBonus + flawless;
+          const lines = [[`${def.name} defeated`, def.lp], [`Correct answers ×${tally.correct}`, answerBonus]];
+          if (flawless) lines.push(["Flawless — no damage taken", flawless]);
+          showResult(true, lines, lp);
+        }
+
+        async function defeat() {
+          phase = "end";
+          battleMusic.stop();
+          restartClass(abelEl, "fallen");
+          sfx.defeat();
+          await log("Abel's light fades...", "La luz de Abel se apaga...", 900);
+          showResult(false);
+        }
+
+        function showResult(win, lines = [], lp = 0, custom = {}) {
+          rCard.classList.toggle("lose", !win);
+          rTitle.textContent = custom.title || (win ? "VICTORY" : "DEFEATED");
+          rSub.innerHTML = custom.sub || (win
+            ? "The forest grows quieter.<small>El bosque se vuelve más silencioso.</small>"
+            : "The Word slipped away... but you can try again.<small>La Palabra se escapó... pero puedes intentarlo de nuevo.</small>");
+          rLines.innerHTML = lines.map(([k, v], i) =>
+            `<div class="r-line" style="animation-delay:${0.2 + i * 0.25}s"><span>${k}</span><span>+${v} LP</span></div>`).join("");
+          rLp.textContent = "";
+          rBtn.textContent = custom.btn || (win ? "RETURN TO MAP" : "TRY AGAIN");
+          rBtn.disabled = true;
+          resultEl.classList.add("show");
+
+          const delay = 300 + lines.length * 250;
+          if (win) {
+            setTimeout(() => {
+              const t0 = performance.now();
+              let lastShown = -1;
+              const count = (ts) => {
+                const p = Math.min(1, (ts - t0) / 1100);
+                const v = Math.round(lp * p);
+                if (v !== lastShown && v % 4 === 0) sfx.coin();
+                lastShown = v;
+                rLp.textContent = `+${v} LINGUA POINTS`;
+                if (p < 1) requestAnimationFrame(count);
+                else { rBtn.disabled = false; rBtn.focus(); }
+              };
+              requestAnimationFrame(count);
+            }, delay);
+          } else {
+            setTimeout(() => { rBtn.disabled = false; rBtn.focus(); }, 600);
+          }
+
+          rBtn.onclick = () => {
+            resultEl.classList.remove("show");
+            if (win) finish({ win: true, lp, hp: abel.hp, ...(custom.extra || {}) });
+            else retry();
+          };
+        }
+
+        function finish(res) {
+          phase = "off";
+          el.classList.remove("show");
+          setTimeout(() => {
+            active = false;
+            el.classList.remove("on");
+            el.setAttribute("aria-hidden", "true");
+            effects = []; parts = [];
+            opts.onEnd(res);
+          }, 650);
+        }
+
+        function resetUnits() {
+          ["hit", "lunge", "dissolve", "slam", "crumble"].forEach((c) => enemyEl.classList.remove(c));
+          ["dash", "hurt", "fallen"].forEach((c) => abelEl.classList.remove(c));
+          eyesEl.classList.remove("attack", "off");
+          eyesEl.dataset.phase = bossPhase;
+          setBar(enemyBar, enemy.hp / enemy.max, true);
+          setBar(abelBar, abel.hp / abel.max, true);
+          abelHpNum.textContent = `${abel.hp} / ${abel.max}`;
+        }
+
+        async function retry() {
+          abel.hp = abel.max;
+          if (boss) {
+            // Punto de control: se reintenta desde el inicio de la fase actual
+            enemy.hp = (4 - bossPhase) * def.phaseHp;
+            pendingPhase = false;
+            tally.taken = 0;
+          } else {
+            enemy.hp = enemy.max;
+            tally = { correct: 0, wrong: 0, taken: 0, reviewed: 0, crushes: 0 };
+          }
+          resetUnits();
+          battleMusic.start(boss ? "boss" : "beast");
+          await log("A golden spark rekindles Abel's light!", "¡Una chispa dorada reaviva la luz de Abel!", 500);
+          if (boss) await log(`The Golem rebuilds itself... Phase ${PHASES[bossPhase].roman} begins again.`,
+                              `El Gólem se recompone... La fase ${PHASES[bossPhase].roman} empieza de nuevo.`, 700);
+          playerTurn();
+        }
+
+        async function start(d, o) {
+          def = d; opts = o;
+          enemy.hp = enemy.max = d.hp;
+          abel.max = o.maxHp;
+          abel.hp = Math.max(1, o.hp);
+          tally = { correct: 0, wrong: 0, taken: 0, reviewed: 0, crushes: 0 };
+
+          boss = !!d.boss;
+          bossPhase = 1;
+          pendingPhase = false;
+          forceIrregular = false;
+          lastFailedVerb = null;
+          lastQuestion = null;
+          usedBoss = new Set();
+          delete decks.P1; delete decks.P2; delete decks.P3;
+          el.classList.toggle("boss", boss);
+          drawEnemy();
+          const ac = abelSprite.getContext("2d");
+          ac.clearRect(0, 0, PLAYER_W, PLAYER_H);
+          ac.drawImage(SPRITES.right[0], 0, 0);
+          enemyEl.style.setProperty("--scale", d.scale);
+          enemyEl.style.setProperty("--aura", d.aura);
+          $("cb-enemy-name").textContent = d.name.toUpperCase();
+          $("cb-enemy-lv").textContent = boss ? "PHASE I/III" : `Lv.${d.lv}`;
+          resetUnits();
+          setMenu(false);
+          resultEl.classList.remove("show");
+          qWrap.classList.remove("show");
+          logEn.textContent = ""; logEs.textContent = "";
+
+          el.classList.add("on");
+          el.setAttribute("aria-hidden", "false");
+          resize();
+          active = true;
+          lastTs = 0;
+          requestAnimationFrame(loop);
+          requestAnimationFrame(() => el.classList.add("show"));
+          battleMusic.start(boss ? "boss" : "beast");
+
+          await wait(700);
+          if (boss) {
+            sfx.roar();
+            eyesEl.classList.add("attack");
+            restartClass(el, "shake-l");
+            showBanner("⚠ BOSS · LEXICON GOLEM", "Certification A2 → B1 · Certificación A2 → B1");
+            await log("The Lexicon Golem rises! The final exam of the realm begins.", "¡El Gólem del Léxico se alza! Comienza el examen final del reino.", 300);
+            await wait(1800);
+            eyesEl.classList.remove("attack");
+            showBanner(`PHASE I · ${PHASES[1].en}`, PHASES[1].es);
+            await wait(2700);
+          } else {
+            sfx.growl();
+            await log(`A wild ${d.name} emerges from the shadows!`, `¡Un ${d.nameEs} salvaje surge de las sombras!`, 600);
+          }
+          playerTurn();
+        }
+
+        cmdBtns.forEach((b) => {
+          b.addEventListener("click", () => choose(b.dataset.skill));
+          b.addEventListener("mouseenter", () => { if (!b.disabled) sfx.blip(); });
+        });
+
+        window.addEventListener("keydown", (e) => {
+          if (!active) return;
+          if (phase === "menu" && (e.key === "1" || e.key === "2")) {
+            e.preventDefault();
+            choose(e.key === "1" ? "A1" : "A2");
+          } else if (phase === "question" && pendingAnswer && ["1", "2", "3"].includes(e.key)) {
+            const b = qOpts.children[+e.key - 1];
+            if (b && !b.disabled) { e.preventDefault(); b.click(); }
+          }
+        });
+
+        return { start };
+      })();
+
+      /* =====================================================
+         CINEMÁTICA FINAL: LAS ALAS DE ABEL Y EL PORTAL B1
+         Se dibuja a 320x180 y se escala con píxeles nítidos.
+         ===================================================== */
+      const Finale = (() => {
+        const LW = 320, LH = 180;
+        const el = $("finale"), cv = $("fin-canvas"), c = cv.getContext("2d");
+        const cap = $("fin-caption"), title = $("fin-title"), card = $("fin-card");
+        const statsEl = $("fin-stats"), btn = $("fin-btn"), endEl = $("fin-end"), skipEl = $("fin-skip"), flashEl = $("fin-flash");
+        const AX = 150, AY = 88;          // posición de Abel (sprite escalado x2)
+        const PX = 264, PY = 98;          // centro del portal
+        const END_T = 18.5;
+
+        let running = false, t0 = 0, fired = 0, parts = [], last = 0;
+
+        // Escenario: santuario en ruinas con los restos del Gólem
+        const stage = document.createElement("canvas");
+        stage.width = LW; stage.height = LH;
+        const rubble = [];
+        (() => {
+          const s = stage.getContext("2d");
+          const r = mulberry32(31);
+          const P = (col, x, y, w, h) => { s.fillStyle = col; s.fillRect(x, y, w, h); };
+          const bands = ["#05030a", "#08040e", "#0c0612", "#100816", "#140a1a", "#190c1e"];
+          bands.forEach((col, i) => P(col, 0, i * 21, LW, 21));
+          for (let i = 0; i < 50; i++) P("#6a5a88", r() * LW | 0, r() * 80 | 0, 1, 1);
+          for (const [x, h, broken] of [[22, 92, 0], [62, 70, 1], [232, 64, 1], [300, 96, 0]]) {
+            P("#120e18", x - 7, 126 - h, 14, h);
+            P("#1a1522", x - 7, 126 - h, 3, h);
+            P("#0c0a10", x + 4, 126 - h, 3, h);
+            if (!broken) { P("#1a1522", x - 10, 126 - h - 4, 20, 4); P("#120e18", x - 9, 126 - h - 8, 18, 4); }
+            else { P("#120e18", x - 7, 126 - h - 3, 5, 3); P("#120e18", x + 1, 126 - h - 6, 6, 6); }
+          }
+          P("#141018", 0, 126, LW, 54);
+          for (let y = 128, i = 1; y < LH; i++) { P("#1b1620", 0, y, LW, 1); y += i * 2; }
+          for (let x = 0; x < LW; x += 16) P("#1b1620", x + ((x / 16) % 2) * 4, 126, 1, 54);
+          for (let i = 0; i < 26; i++) {
+            const rb = { x: 96 + r() * 120, y: 128 + r() * 26, w: 3 + r() * 8 | 0, h: 2 + r() * 6 | 0, c: ["#474b54", "#6b6f78", "#2e3138"][r() * 3 | 0], glow: r() < 0.35 };
+            rubble.push(rb);
+            P(rb.c, rb.x | 0, rb.y | 0, rb.w, rb.h);
+            P("#8a8f99", rb.x | 0, rb.y | 0, rb.w, 1);
+          }
+          for (let i = 0; i < 5; i++) { s.globalAlpha = 0.05; P("#a04060", 0, 118 + i * 4, LW, 10); }
+          s.globalAlpha = 1;
+        })();
+
+        const smooth = (a, b, t) => { const x = Math.min(1, Math.max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x); };
+
+        function caption(en, es) {
+          cap.classList.remove("show");
+          setTimeout(() => {
+            cap.innerHTML = en ? `${en}<small>${es}</small>` : "";
+            if (en) cap.classList.add("show");
+          }, 450);
+        }
+
+        const CUES = [
+          [0.8,  () => caption("The Golem falls silent. Its last word echoes through the forest...", "El Gólem enmudece. Su última palabra resuena en el bosque...")],
+          [4.0,  () => { caption("Every word Abel has learned turns into light.", "Cada palabra que Abel ha aprendido se convierte en luz."); sfx.wings(); }],
+          [8.0,  () => caption("His broken wings... shine once more.", "Sus alas rotas... vuelven a brillar.")],
+          [11.5, () => { caption("To the east, a crimson gate tears the night apart.", "Al este, una puerta carmesí desgarra la noche."); sfx.portal(); }],
+          [15.5, () => { caption("", ""); title.classList.add("show"); sfx.fanfare(); }],
+          [END_T, () => { card.classList.add("show"); skipEl.style.display = "none"; setTimeout(() => btn.focus(), 100); }],
+        ];
+
+        function drawWings(cx, cy, grow, glow, t) {
+          const layer = (color, alpha, spread) => {
+            c.globalAlpha = alpha;
+            for (const s of [-1, 1]) {
+              for (let i = 0; i < 7; i++) {
+                const flap = Math.sin(t * 2.2) * 0.07 * grow;
+                const a = ((72 - i * 15) * Math.PI) / 180 + flap;
+                const len = (8 + 16 * Math.sin(((i + 1) / 8) * Math.PI)) * (0.2 + 0.8 * grow) + spread;
+                const dx = s * Math.cos(a), dy = -Math.sin(a);
+                for (let k = 0; k < len; k++) {
+                  c.fillStyle = typeof color === "function" ? color(k / len) : color;
+                  c.fillRect((cx + s * 4 + dx * k) | 0, (cy + dy * k + k * 0.18) | 0, 2, 2);
+                }
+              }
+            }
+            c.globalAlpha = 1;
+          };
+          layer("#7a7f8e", 1, 0);                                                  // alas rotas, grises
+          if (glow > 0) {
+            layer((p) => (p > 0.82 ? "#ffffff" : p > 0.4 ? "#fbe7a1" : "#e3b341"), glow, 0);
+            c.globalCompositeOperation = "lighter";
+            layer("#e3b341", glow * 0.35, 2);                                       // resplandor
+            c.globalCompositeOperation = "source-over";
+          }
+        }
+
+        function drawPortal(p, t) {
+          if (p <= 0) return;
+          const rx = 20 * p, ry = 42 * Math.min(1, p * 1.25);
+          c.save();
+          c.globalCompositeOperation = "lighter";
+          const gr = c.createRadialGradient(PX, PY, 0, PX, PY, 70 * p);
+          gr.addColorStop(0, `rgba(255,40,70,${0.45 * p})`);
+          gr.addColorStop(1, "rgba(255,40,70,0)");
+          c.fillStyle = gr;
+          c.fillRect(PX - 80, PY - 80, 160, 160);
+          c.restore();
+
+          c.fillStyle = "#14000a";
+          c.beginPath(); c.ellipse(PX, PY, rx, ry, 0, 0, Math.PI * 2); c.fill();
+
+          // Silueta del Imperio Carmesí al otro lado
+          if (p > 0.6) {
+            c.save();
+            c.beginPath(); c.ellipse(PX, PY, rx * 0.86, ry * 0.86, 0, 0, Math.PI * 2); c.clip();
+            c.globalAlpha = (p - 0.6) / 0.4;
+            c.fillStyle = "#5a0018"; c.fillRect(PX - 30, PY - 50, 60, 100);
+            c.fillStyle = "#ff3b5c"; c.beginPath(); c.arc(PX + 6, PY - 20, 7, 0, Math.PI * 2); c.fill();
+            c.fillStyle = "#0a0004";
+            for (const [ox, w, h] of [[-14, 5, 26], [-8, 4, 18], [-3, 6, 34], [4, 4, 20], [9, 5, 28], [-18, 36, 4]]) c.fillRect(PX + ox, PY + 22 - h, w, h);
+            c.fillRect(PX - 3 + 2, PY + 22 - 40, 2, 6);
+            c.restore();
+            c.globalAlpha = 1;
+          }
+
+          const cols = ["#ff2a4a", "#c0102a", "#ff6b8a", "#7a0018", "#ff2a4a", "#ffd0d8"];
+          c.lineWidth = 1.5;
+          for (let k = 0; k < 6; k++) {
+            c.strokeStyle = cols[k];
+            c.setLineDash([5 + k, 4]);
+            c.lineDashOffset = t * (18 + k * 8) * (k % 2 ? -1 : 1);
+            c.beginPath(); c.ellipse(PX, PY, rx * (1 - k * 0.12), ry * (1 - k * 0.12), 0, 0, Math.PI * 2); c.stroke();
+          }
+          c.setLineDash([]);
+
+          if (Math.random() < p * 0.8) {
+            const a = Math.random() * Math.PI * 2;
+            parts.push({ x: PX + Math.cos(a) * rx * 1.6, y: PY + Math.sin(a) * ry * 1.2, tx: PX, ty: PY, life: 1.2, max: 1.2,
+                         c: Math.random() < 0.5 ? "#ff6b8a" : "#ff2a4a", spiral: a });
+          }
+        }
+
+        function draw(t, dt) {
+          const glow = smooth(4, 9, t);
+          const grow = smooth(5.5, 9.5, t);
+          const rise = smooth(8, 11, t) * 6 + (t > 11 ? Math.sin(t * 1.6) * 1.5 : 0);
+          const portal = smooth(11.5, 15, t);
+          const ay = AY - rise;
+
+          c.globalCompositeOperation = "source-over";
+          c.globalAlpha = 1;
+          c.drawImage(stage, 0, 0);
+
+          // Brasas rojas del Gólem que se apagan
+          const ember = 1 - smooth(1, 6, t);
+          if (ember > 0) {
+            c.globalCompositeOperation = "lighter";
+            for (const rb of rubble) if (rb.glow) {
+              c.globalAlpha = ember * (0.5 + 0.5 * Math.sin(t * 5 + rb.x));
+              c.fillStyle = "#ff3b3b";
+              c.fillRect((rb.x + rb.w / 2) | 0, (rb.y + 1) | 0, 1, 1);
+            }
+            c.globalCompositeOperation = "source-over";
+            c.globalAlpha = 1;
+          }
+
+          drawPortal(portal, t);
+
+          // Rayos de luz giratorios alrededor de Abel
+          if (glow > 0) {
+            c.save();
+            c.globalCompositeOperation = "lighter";
+            c.translate(AX, ay + 14);
+            for (let i = 0; i < 10; i++) {
+              c.rotate((Math.PI * 2) / 10);
+              c.globalAlpha = glow * 0.12 * (0.6 + 0.4 * Math.sin(t * 2 + i));
+              c.fillStyle = "#fbe7a1";
+              c.beginPath(); c.moveTo(0, 0); c.lineTo(160, -10 - glow * 6); c.lineTo(160, 10 + glow * 6); c.closePath(); c.fill();
+            }
+            c.restore();
+            c.save();
+            c.globalCompositeOperation = "lighter";
+            const gr = c.createRadialGradient(AX, ay + 14, 0, AX, ay + 14, 36 + glow * 26);
+            gr.addColorStop(0, `rgba(255,240,190,${0.65 * glow})`);
+            gr.addColorStop(1, "rgba(255,240,190,0)");
+            c.fillStyle = gr;
+            c.fillRect(AX - 70, ay - 56, 140, 140);
+            c.restore();
+          }
+
+          drawWings(AX, ay + 15, grow, glow, t);
+
+          // Abel
+          c.imageSmoothingEnabled = false;
+          c.globalAlpha = 0.4;
+          c.fillStyle = "#000";
+          c.fillRect(AX - 9, AY + 29, 18, 2);
+          c.globalAlpha = 1;
+          c.drawImage(SPRITES.down[0], 0, 0, 12, 15, AX - 12, ay, 24, 30);
+
+          // Halo: roto al principio, completo cuando las alas brillan
+          c.globalCompositeOperation = "lighter";
+          c.fillStyle = "#e3b341";
+          if (glow < 0.6) {
+            c.globalAlpha = 0.6;
+            c.fillRect(AX - 7, ay - 4, 4, 1); c.fillRect(AX + 1, ay - 4, 6, 1);
+          } else {
+            c.globalAlpha = 0.6 + 0.4 * Math.sin(t * 3);
+            c.fillRect(AX - 7, ay - 4, 14, 1); c.fillRect(AX - 8, ay - 3, 1, 1); c.fillRect(AX + 7, ay - 3, 1, 1);
+            c.fillRect(AX - 7, ay - 2, 14, 1);
+          }
+          c.globalAlpha = 1;
+
+          // Motas de luz: de los escombros hacia el pecho de Abel
+          if (t > 3.8 && t < 9.5 && Math.random() < 0.7) {
+            const rb = rubble[(Math.random() * rubble.length) | 0];
+            parts.push({ x: rb.x, y: rb.y, tx: AX, ty: ay + 14, life: 1.4, max: 1.4, c: Math.random() < 0.6 ? "#fbe7a1" : "#ffffff" });
+          }
+          parts = parts.filter((p) => (p.life -= dt) > 0);
+          for (const p of parts) {
+            const k = Math.min(1, dt * 2.2);
+            p.x += (p.tx - p.x) * k + (p.spiral !== undefined ? Math.cos(p.spiral + p.life * 6) * 0.6 : 0);
+            p.y += (p.ty - p.y) * k + (p.spiral !== undefined ? Math.sin(p.spiral + p.life * 6) * 0.6 : 0);
+            c.globalAlpha = Math.min(1, p.life / p.max * 1.5);
+            c.fillStyle = p.c;
+            c.fillRect(p.x | 0, p.y | 0, 1, 1);
+          }
+          c.globalAlpha = 1;
+          c.globalCompositeOperation = "source-over";
+        }
+
+        function loop(ts) {
+          if (!running) return;
+          const t = (ts - t0) / 1000;
+          const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
+          last = ts;
+          while (fired < CUES.length && t >= CUES[fired][0]) CUES[fired++][1]();
+          draw(t, dt);
+          requestAnimationFrame(loop);
+        }
+
+        function skip() {
+          if (!running || fired >= CUES.length) return;
+          t0 = performance.now() - END_T * 1000;
+          cap.classList.remove("show");
+          while (fired < CUES.length - 1) fired++; // salta subtítulos y sonidos intermedios
+          title.classList.add("show");
+        }
+
+        function play(info) {
+          statsEl.innerHTML = `
+            <div><b>${info.accuracy}%</b>Accuracy<br>Precisión</div>
+            <div><b>${info.reviewed}</b>Verbs mastered<br>Verbos dominados</div>
+            <div><b>${info.lp}</b>Lingua Points<br>Puntos LP</div>`;
+          el.classList.add("on");
+          el.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => el.classList.add("show"));
+          running = true;
+          fired = 0;
+          parts = [];
+          last = 0;
+          t0 = performance.now();
+          requestAnimationFrame(loop);
+        }
+
+        el.addEventListener("click", (e) => { if (!card.contains(e.target)) skip(); });
+        window.addEventListener("keydown", (e) => {
+          if (running && (e.key === "Enter" || e.key === "Escape") && fired < CUES.length) { e.preventDefault(); skip(); }
+        });
+
+        btn.addEventListener("click", () => {
+          sfx.portalEnter();
+          btn.disabled = true;
+          restartClass(flashEl, "go");
+          setTimeout(() => {
+            card.classList.remove("show");
+            title.classList.remove("show");
+            endEl.classList.add("on");
+            requestAnimationFrame(() => endEl.classList.add("show"));
+          }, 500);
+          setTimeout(() => { running = false; }, 2200);
+        });
+
+        return { play };
+      })();
+
+      /* =====================================================
+         CINEMÁTICA
+         ===================================================== */
+      const intro     = $("intro");
+      const crawl     = $("crawl");
+      const skipHint  = $("skip-hint");
+      const startWrap = $("start-wrap");
+      const startBtn  = $("start-btn");
+      const levelMsg  = $("level-msg");
+      const flash     = $("flash");
+
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // Atajos de desarrollo: ?skip (Sub-nivel 1.1) · ?level=1.2 · ?level=1.3 (jefe final)
+      const params = new URLSearchParams(location.search);
+      const lvlParam = params.get("level");
+      const startLevel = ["1.2", "1.3"].includes(lvlParam) ? lvlParam : location.hash === "#level2" ? "1.2" : "1.1";
+      const skipToGame = params.has("skip") || params.has("finale") || location.hash === "#game" || startLevel !== "1.1";
+      let introDone = false;
+
+      function startCrawl() {
+        if (reducedMotion) { showStart(); return; }
+        const distance = crawl.offsetHeight + window.innerHeight * 1.9;
+        const speed = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--crawl-speed")) || 26;
+        crawl.style.setProperty("--crawl-distance", `-${distance}px`);
+        crawl.style.setProperty("--crawl-duration", `${distance / speed}s`);
+        crawl.classList.add("rolling");
+        crawl.addEventListener("animationend", showStart, { once: true });
+      }
+
+      function showStart() {
+        if (introDone) return;
+        introDone = true;
+        intro.classList.add("hidden");
+        skipHint.style.display = "none";
+        startWrap.classList.add("show");
+        setTimeout(() => startBtn.focus({ preventScroll: true }), 600);
+      }
+
+      intro.addEventListener("click", showStart);
+      window.addEventListener("keydown", (e) => {
+        if (!introDone && ["Enter", " ", "Escape"].includes(e.key)) {
+          e.preventDefault();
+          showStart();
+        }
+      });
+
+      let started = false;
+      startBtn.addEventListener("mouseenter", sfx.blip);
+      startBtn.addEventListener("click", () => {
+        if (started) return;
+        started = true;
+        sfx.start();
+        flash.classList.add("go");
+        startWrap.classList.remove("show");
+
+        setTimeout(() => {
+          intro.remove();
+          startWrap.remove();
+          skipHint.remove();
+          levelMsg.classList.add("show");
+        }, 1200);
+
+        setTimeout(() => {
+          levelMsg.classList.add("fade-out");
+          setTimeout(() => { levelMsg.remove(); Game.start("1.1"); }, 1200);
+        }, 5600);
+      });
+
+      /* =====================================================
+         MOTOR DE EXPLORACIÓN (multi-mapa)
+         ===================================================== */
+      const Game = (() => {
+        const SPEED = 85; // px lógicos por segundo
+
+        const root    = $("game-root");
+        const canvas  = $("game");
+        const g       = canvas.getContext("2d");
+        const dark    = document.createElement("canvas");
+        const dg      = dark.getContext("2d");
+
+        const hudLevel = $("hud-level");
+        const objBox  = $("hud-obj");
+        const objEn   = $("obj-en");
+        const objEs   = $("obj-es");
+        const hudHp   = $("hud-hp");
+        const hudLp   = $("hud-lp");
+        const exitArrow = $("exit-arrow");
+
+        let zoom = 3, viewW = 0, viewH = 0;
+        let mode = "idle"; // idle | explore | dialog | puzzle | combat | transition
+        let running = false;
+        let m = null;      // mapa activo
+        let particles = [];
+
+        const stats = { hp: 100, maxHp: 100, lp: 0 };
+        const flags = { arcSolved: false };
+
+        const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+        function R(c, x, y, w, h) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+
+        /* ---------- Diálogos ---------- */
+        const WAKE_LINES = [
+          { who: "abel", name: "ABEL", en: "...Where... am I? The light... it's gone.",
+            es: "...¿Dónde... estoy? La luz... se ha ido." },
+          { who: "abel", name: "ABEL", en: "My wings are broken. I can hear the trees whispering my name...",
+            es: "Mis alas están rotas. Oigo a los árboles susurrar mi nombre..." },
+          { who: "abel", name: "ABEL", en: "Something metallic is humming to the east. I should take a look.",
+            es: "Algo metálico zumba hacia el este. Debería echar un vistazo." },
+        ];
+
+        const ARC_LINES = [
+          { who: "arc", name: "UNIT-A.R.C.", en: "B-bzzt... Language core... restored. Syntax: OK.",
+            es: "B-bzzt... Núcleo de lenguaje... restaurado. Sintaxis: OK." },
+          { who: "arc", name: "UNIT-A.R.C.", en: "Thank you, stranger. I have been stuck in this forest for 1,042 cycles.",
+            es: "Gracias, forastero. Llevaba 1.042 ciclos atrapado en este bosque." },
+          { who: "arc", name: "UNIT-A.R.C.", en: "Your signature... you are an angel? Your wings are broken, but your light still shines.",
+            es: "Tu firma... ¿eres un ángel? Tus alas están rotas, pero tu luz aún brilla." },
+          { who: "arc", name: "UNIT-A.R.C.", en: "I have deactivated the seal to the east. The path is open. Be careful, Abel.",
+            es: "He desactivado el sello del este. El camino está abierto. Ten cuidado, Abel." },
+        ];
+
+        const HOLLOW_LINES = [
+          { who: "abel", name: "ABEL", en: "Those howls... The forest is angrier here.",
+            es: "Esos aullidos... Aquí el bosque está más furioso." },
+          { who: "abel", name: "ABEL", en: "Magic Beasts. Without my wings, words are my only weapon: the true Word of light.",
+            es: "Bestias Mágicas. Sin mis alas, las palabras son mi única arma: la verdadera Palabra de luz." },
+          { who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... Abel! Touch a beast to fight. Answer correctly to strike. Fail, and it strikes you.",
+            es: "Bzzt... ¡Abel! Toca una bestia para luchar. Responde bien para atacar. Si fallas, te atacará ella." },
+        ];
+
+        const HOLLOW_CLEAR = [
+          { who: "abel", name: "ABEL", en: "The howling has stopped... The seal to the east is fading.",
+            es: "Los aullidos han cesado... El sello del este se desvanece." },
+        ];
+
+        const SANCTUM_LINES = [
+          { who: "abel", name: "ABEL", en: "Ancient stones... and letters carved on every wall.",
+            es: "Piedras antiguas... y letras talladas en cada muro." },
+          { who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... The Lexicon Sanctum. Its guardian decides who may leave the first realm.",
+            es: "Bzzt... El Santuario del Léxico. Su guardián decide quién puede abandonar el primer reino." },
+          { who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Beat it, and you will be ready for the next level: B1.",
+            es: "Si lo vences, estarás listo para el siguiente nivel: B1." },
+        ];
+
+        const GOLEM_WAKE = [
+          { who: "golem", name: "LEXICON GOLEM", en: "WHO... DARES... TO SPEAK... IN MY SANCTUM?",
+            es: "¿QUIÉN... OSA... HABLAR... EN MI SANTUARIO?" },
+          { who: "abel", name: "ABEL", en: "I am Abel. I must pass to the east.",
+            es: "Soy Abel. Debo pasar al este." },
+          { who: "golem", name: "LEXICON GOLEM", en: "I AM THE FINAL EXAM OF THIS REALM. PROVE YOUR WORDS... OR BE BURIED WITH THE FORGOTTEN.",
+            es: "SOY EL EXAMEN FINAL DE ESTE REINO. DEMUESTRA TUS PALABRAS... O SERÁS ENTERRADO CON LOS OLVIDADOS." },
+          { who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Careful! If you fail an irregular verb, it will use GRAMMAR CRUSH: double damage!",
+            es: "¡Cuidado! Si fallas un verbo irregular, usará GRAMMAR CRUSH: ¡doble daño!" },
+        ];
+
+        /* ---------- Paletas y definición de mapas ---------- */
+        const PAL = {
+          forest: {
+            ground: ["#15201b", "#181a22", "#1b1428"], moss: ["#1c2c21", "#231a35"], path: ["#1f1824", "#2a2130"],
+            pebble: ["#3a3044", "#171219"], grass: ["#2a4030", "#33503a", "#3a2f55", "#2b2440"], leaves: ["#4a2f5c", "#5c3a2a"],
+            purple: 0.35, darkness: 0.62, wisps: ["#b98cff", "#8fffc4"], fog: "120, 90, 170", bones: false,
+          },
+          hollow: {
+            ground: ["#171322", "#191425", "#22122a"], moss: ["#241a33", "#2c1527"], path: ["#1d1420", "#2a1b28"],
+            pebble: ["#40303f", "#140d14"], grass: ["#3a2f55", "#2b2440", "#4a2a40", "#263a2e"], leaves: ["#5c2a3a", "#3a2a5c"],
+            purple: 0.7, darkness: 0.7, wisps: ["#b98cff", "#ff6b8a"], fog: "150, 70, 120", bones: true,
+          },
+          sanctum: {
+            ground: ["#16151c", "#18161e", "#1c1622"], moss: ["#22212b", "#201a28"], path: ["#24222c", "#302d38"],
+            pebble: ["#4a4756", "#15141a"], grass: ["#2b2a36", "#3a2f55", "#263a2e"], leaves: ["#3a2a3a", "#2a2a3a"],
+            purple: 0.5, darkness: 0.66, wisps: ["#ff6b6b", "#b98cff"], fog: "130, 60, 70", bones: false, tiles: true,
+          },
+        };
+
+        const MAPS = {
+          "1.1": {
+            id: "1.1", name: "The Awakening", W: 1800, H: 640, seed: 1311, pal: PAL.forest, interior: 72,
+            path: (x) => 320 + Math.sin(x / 230) * 80 + Math.sin(x / 97) * 18,
+            arcX: 1300, beasts: [],
+            objective: ["Find the source of the metallic humming.", "Encuentra el origen del zumbido metálico."],
+            intro: WAKE_LINES, next: "1.2",
+          },
+          "1.2": {
+            id: "1.2", name: "The Howling Hollow", W: 2100, H: 640, seed: 4242, pal: PAL.hollow, interior: 78,
+            path: (x) => 320 + Math.sin(x / 180 + 1.2) * 95 + Math.sin(x / 71) * 14,
+            arcX: null,
+            beasts: [{ x: 620, kind: "umbral" }, { x: 1200, kind: "fang" }, { x: 1760, kind: "alpha" }],
+            objective: null, intro: HOLLOW_LINES, next: "1.3",
+          },
+          "1.3": {
+            id: "1.3", name: "The Lexicon Sanctum", W: 1500, H: 640, seed: 9001, pal: PAL.sanctum, interior: 46,
+            path: (x) => 320 + Math.sin(x / 260 + 0.4) * 60,
+            arcX: null, beasts: [], boss: { x: 1270 },
+            mix: (r) => (r < 0.45 ? "pillar" : r < 0.7 ? "tomb" : r < 0.88 ? "dead" : "pine"),
+            objective: ["Confront the guardian of the Sanctum.", "Enfréntate al guardián del Santuario."],
+            intro: SANCTUM_LINES, next: null,
+          },
+        };
+
+        const BOX = {
+          pine:   (x, y) => ({ x: x - 5, y: y - 6, w: 10, h: 6 }),
+          oak:    (x, y) => ({ x: x - 5, y: y - 6, w: 10, h: 6 }),
+          dead:   (x, y) => ({ x: x - 4, y: y - 5, w: 8,  h: 5 }),
+          tomb:   (x, y) => ({ x: x - 7, y: y - 5, w: 14, h: 5 }),
+          pillar: (x, y) => ({ x: x - 8, y: y - 6, w: 16, h: 6 }),
+        };
+
+        function buildMap(def) {
+          const rand = mulberry32(def.seed); // semilla fija: cada mapa es siempre igual
+          const { W, H, pal } = def;
+          const pathY = def.path;
+          const mm = {
+            def, id: def.id, W, H, pal, pathY, barrierX: W - 56, unlocked: false, barrierAlpha: 1,
+            obstacles: [], beasts: [], arc: null, mushrooms: [], wisps: [],
+            start: { x: 60, y: Math.round(pathY(66)) - 14 },
+          };
+
+          if (def.arcX != null) {
+            const ax = def.arcX, ay = Math.round(pathY(ax + 8)) - 22;
+            mm.arc = { x: ax, y: ay, box: { x: ax, y: ay + 16, w: 16, h: 7 } };
+          }
+          for (const b of def.beasts) {
+            mm.beasts.push({ kind: b.kind, def: BEASTS[b.kind], homeX: b.x, x: b.x, y: Math.round(pathY(b.x + 10)) - 10,
+                             phase: rand() * 6.28, flip: false, alive: true });
+          }
+          if (def.boss) {
+            const bx = def.boss.x, by = Math.round(pathY(bx + 28)) - 56;
+            mm.boss = { def: GOLEM, x: bx, y: by, alive: true, awake: false, box: { x: bx + 6, y: by + 44, w: 44, h: 16 } };
+          }
+
+          const add = (type, bx, by) => {
+            bx = Math.round(bx); by = Math.round(by);
+            mm.obstacles.push({ type, bx, by, box: BOX[type](bx, by), v: rand() });
+          };
+
+          // Muralla de árboles arriba y abajo
+          for (let x = -10; x < W + 20; x += 18 + rand() * 10) {
+            add(rand() < 0.6 ? "pine" : "oak", x, 34 + rand() * 24);
+            add(rand() < 0.6 ? "pine" : "oak", x + 9, H - 12 + rand() * 18);
+          }
+          for (let x = 0; x < W; x += 26 + rand() * 14) add(rand() < 0.5 ? "pine" : "dead", x, 12 + rand() * 14);
+
+          // Interior: la separación mínima (62px) garantiza que siempre hay hueco para pasar
+          const placed = [];
+          for (let i = 0; i < 1800 && placed.length < def.interior; i++) {
+            const x = 110 + rand() * (W - 270);
+            const y = 110 + rand() * (H - 170);
+            if (Math.abs(y - pathY(x)) < 42) continue;
+            if (Math.hypot(x - mm.start.x, y - mm.start.y) < 90) continue;
+            if (mm.arc && Math.hypot(x - (mm.arc.x + 8), y - (mm.arc.y + 20)) < 80) continue;
+            if (mm.beasts.some((b) => Math.hypot(x - (b.x + 10), y - (b.y + 10)) < 80)) continue;
+            if (mm.boss && Math.hypot(x - (mm.boss.x + 28), y - (mm.boss.y + 50)) < 130) continue;
+            if (placed.some((p) => Math.hypot(p.x - x, p.y - y) < 62)) continue;
+            placed.push({ x, y });
+            const r = rand();
+            add(def.mix ? def.mix(r) : r < 0.33 ? "pine" : r < 0.58 ? "oak" : r < 0.74 ? "dead" : r < 0.9 ? "tomb" : "pillar", x, y);
+          }
+          if (mm.boss) { // columnata que flanquea al guardián
+            const { x: bx, y: by } = mm.boss;
+            for (const [ox, oy] of [[-46, 6], [-46, 96], [-100, 0], [-100, 102], [104, 10], [104, 92]]) add("pillar", bx + 28 + ox, by + oy);
+          }
+          if (mm.arc) {
+            const ax = mm.arc.x;
+            add("tomb", ax - 70, pathY(ax - 70) - 30);
+            add("tomb", ax - 40, pathY(ax - 40) + 44);
+            add("pillar", ax + 60, pathY(ax + 60) - 34);
+          }
+          for (const b of mm.beasts) { // ruinas junto a cada guarida
+            add("pillar", b.x - 34, pathY(b.x - 34) - 36);
+            add("tomb", b.x + 46, pathY(b.x + 46) + 40);
+          }
+          mm.boxes = mm.obstacles.map((o) => o.box);
+
+          // Suelo pre-renderizado
+          const ground = document.createElement("canvas");
+          ground.width = W; ground.height = H;
+          const c = ground.getContext("2d");
+          const grad = c.createLinearGradient(0, 0, 0, H);
+          grad.addColorStop(0, pal.ground[0]);
+          grad.addColorStop(0.5, pal.ground[1]);
+          grad.addColorStop(1, pal.ground[2]);
+          c.fillStyle = grad;
+          c.fillRect(0, 0, W, H);
+          for (let i = 0; i < W / 4.7; i++) {
+            c.globalAlpha = 0.35 + rand() * 0.4;
+            c.fillStyle = rand() < 0.55 ? pal.moss[0] : pal.moss[1];
+            c.fillRect(rand() * W | 0, rand() * H | 0, 8 + rand() * 34 | 0, 4 + rand() * 16 | 0);
+          }
+          c.globalAlpha = 1;
+          for (let x = 0; x < W; x += 2) {
+            const y = pathY(x);
+            const half = 13 + Math.sin(x / 37) * 3;
+            c.fillStyle = pal.path[0]; c.fillRect(x, y - half - 2, 2, half * 2 + 4);
+            c.fillStyle = pal.path[1]; c.fillRect(x, y - half, 2, half * 2);
+          }
+          for (let i = 0; i < W / 7; i++) {
+            const x = rand() * W, y = pathY(x) + (rand() - 0.5) * 22;
+            c.fillStyle = rand() < 0.5 ? pal.pebble[0] : pal.pebble[1];
+            c.fillRect(x | 0, y | 0, 1 + (rand() * 2 | 0), 1);
+          }
+          for (let i = 0; i < W * 0.9; i++) {
+            const x = rand() * W | 0, y = rand() * H | 0;
+            if (Math.abs(y - pathY(x)) < 14) continue;
+            c.fillStyle = pal.grass[rand() * pal.grass.length | 0];
+            c.fillRect(x, y, 1, 2);
+            if (rand() < 0.3) c.fillRect(x + 1, y - 1, 1, 2);
+          }
+          for (let i = 0; i < W / 20; i++) {
+            c.fillStyle = rand() < 0.5 ? pal.leaves[0] : pal.leaves[1];
+            c.fillRect(rand() * W | 0, rand() * H | 0, 2, 1);
+          }
+          if (pal.tiles) { // calzada de losas con runas rojas apagadas
+            for (let x = 0; x < W; x += 12) {
+              const y = pathY(x), half = 14;
+              c.fillStyle = "#1a1820";
+              c.fillRect(x, y - half, 1, half * 2);
+              c.fillRect(x, (y - 1) | 0, 12, 1);
+              if (rand() < 0.18) { c.fillStyle = "#5a1a22"; c.fillRect(x + 5, (y - 7) | 0, 2, 1); c.fillRect(x + 5, (y - 6) | 0, 1, 2); }
+            }
+            for (let i = 0; i < 40; i++) { // letras talladas en el suelo
+              const x = rand() * W | 0, y = 90 + rand() * (H - 150) | 0;
+              c.fillStyle = "#2a2733";
+              c.fillRect(x, y, 3, 1); c.fillRect(x + 1, y, 1, 4); c.fillRect(x + 5, y, 1, 4); c.fillRect(x + 5, y + 3, 3, 1);
+            }
+          }
+          if (pal.bones) { // huesos y marcas de garras: territorio de bestias
+            for (let i = 0; i < 46; i++) {
+              const x = rand() * W | 0, y = 90 + rand() * (H - 150) | 0;
+              c.fillStyle = "#cfc6b8";
+              c.fillRect(x, y, 4, 1); c.fillRect(x - 1, y - 1, 1, 3); c.fillRect(x + 4, y - 1, 1, 3);
+            }
+            for (let i = 0; i < 26; i++) {
+              const x = rand() * W | 0, y = 90 + rand() * (H - 150) | 0;
+              c.fillStyle = "#0e0812";
+              for (let k = 0; k < 3; k++) for (let s = 0; s < 6; s++) c.fillRect(x + k * 3 + s, y + s, 1, 1);
+            }
+          }
+          mm.ground = ground;
+
+          for (let i = 0; i < 34; i++) {
+            const o = mm.obstacles[(rand() * mm.obstacles.length) | 0];
+            if (o.by < 80 || o.by > H - 30) continue;
+            mm.mushrooms.push({ x: o.bx + (rand() < 0.5 ? -8 : 7), y: o.by - 1, p: rand() * 6.28 });
+          }
+          for (let i = 0; i < 50; i++) {
+            mm.wisps.push({ x: rand() * W, y: 70 + rand() * (H - 130), p: rand() * 6.28, c: pal.wisps[rand() < 0.55 ? 0 : 1] });
+          }
+          return mm;
+        }
+
+        /* ---------- Unit-A.R.C. ---------- */
+        function drawArc(c, x, y, t, ok) {
+          const P = (col, a, b, w, h) => { c.fillStyle = col; c.fillRect(x + a, y + b, w, h); };
+          c.globalAlpha = 0.35; P("#000", -1, 21, 18, 3); c.globalAlpha = 1;
+          P("#59636e", 7, 1, 2, 4);
+          const tip = ok ? (Math.sin(t * 3) > 0 ? "#5ff3ff" : "#2a8a99")
+                         : ((t * 7 | 0) % 3 === 0 ? "#ff9a3c" : "#5a2a14");
+          P(tip, 6, -1, 4, 2);
+          P("#8d99a6", 2, 5, 12, 8); P("#a9b4bf", 2, 5, 12, 1); P("#5e6873", 2, 11, 12, 2);
+          P("#0b1a22", 3, 7, 10, 3);
+          if (ok) {
+            const s = (Math.sin(t * 2) * 3 + 3) | 0;
+            P("#5ff3ff", 4 + s, 8, 3, 1);
+          } else if ((t * 5 | 0) % 4 !== 0) {
+            P("#ff7a2a", 5, 8, 2, 1); P("#ff7a2a", 9, 8, 2, 1);
+          }
+          P("#4b5560", 6, 13, 4, 1);
+          P("#7b8693", 1, 14, 14, 7); P("#97a2ae", 1, 14, 14, 1); P("#5a636e", 1, 19, 14, 2);
+          P("#2a2f36", 5, 15, 6, 3);
+          P(ok ? "#e3b341" : "#6b5420", 6, 16, 1, 1);
+          P(ok ? "#5ff3ff" : "#3a3a3a", 8, 16, 1, 1);
+          P(ok ? "#e3b341" : "#6b5420", 10, 16, 1, 1);
+          P("#7a4a2a", 2, 17, 2, 2); P("#7a4a2a", 12, 6, 1, 2);
+          P("#3d5a3a", 3, 5, 3, 1); P("#3d5a3a", 11, 14, 2, 1);
+          P("#6a7480", -1, 14, 2, 6); P("#6a7480", 15, 14, 2, 6);
+          P("#4b5560", -1, 20, 2, 1); P("#4b5560", 15, 20, 2, 1);
+          P("#2e333a", 0, 21, 16, 2);
+          for (let i = 0; i < 5; i++) P("#59636e", 1 + i * 3, 21, 1, 1);
+        }
+
+        /* ---------- Dibujo de obstáculos ---------- */
+        const PINE_GREEN  = ["#1f3a2b", "#2c5038", "#16281f"];
+        const PINE_PURPLE = ["#352a52", "#45386a", "#221a36"];
+
+        function drawPine(x, y, v) {
+          const [main, hi, shade] = v < m.pal.purple ? PINE_PURPLE : PINE_GREEN;
+          R("#1c121a", x - 3, y - 12, 6, 12); R("#2b1d28", x - 3, y - 12, 2, 12); R("#1c121a", x - 5, y - 2, 10, 2);
+          const layers = 4 + Math.floor(v * 3);
+          let ly = y;
+          for (let i = 0; i < layers; i++) {
+            const w = Math.round(32 - i * (24 / layers));
+            ly = y - 20 - i * 7;
+            const lx = x - (w >> 1);
+            R(main, lx, ly, w, 9);
+            R(shade, lx, ly + 7, w, 2);
+            R(hi, lx + 2, ly + 1, Math.max(2, w >> 2), 2);
+          }
+          R(main, x - 2, ly - 4, 4, 4);
+          R(main, x - 1, ly - 7, 2, 3);
+        }
+
+        function drawOak(x, y, v) {
+          const purple = v < m.pal.purple + 0.15;
+          const dk = "#211936", mn = purple ? "#2e2449" : "#243a2e", hi = purple ? "#40336a" : "#33503d", moss = "#2a3d2e";
+          R("#1e1420", x - 4, y - 16, 8, 16); R("#2c1f2c", x - 4, y - 16, 3, 16); R("#1e1420", x - 7, y - 2, 14, 2);
+          R(dk, x - 20, y - 38, 40, 18);
+          R(mn, x - 18, y - 42, 36, 18);
+          R(mn, x - 13, y - 50, 26, 10);
+          R(mn, x - 22, y - 34, 8, 8);
+          R(mn, x + 14, y - 36, 8, 8);
+          R(hi, x - 12, y - 48, 10, 3);
+          R(hi, x - 17, y - 40, 6, 3);
+          R(moss, x + 4, y - 30, 8, 3);
+          R(dk, x - 18, y - 26, 36, 3);
+          R(moss, x - 10, y - 24, 1, 6); R(moss, x + 9, y - 24, 1, 4);
+        }
+
+        function drawDead(x, y, v) {
+          const c = "#2a2030";
+          R(c, x - 2, y - 34, 4, 34); R("#3a2d40", x - 2, y - 34, 1, 34);
+          R(c, x - 12, y - 26, 10, 2); R(c, x - 12, y - 32, 2, 6);
+          R(c, x + 2, y - 20, 10, 2); R(c, x + 10, y - 26, 2, 6);
+          R(c, x - 1, y - 42, 2, 8); R(c, x + 1, y - 38, 6, 2);
+          R(c, x - 5, y - 2, 10, 2);
+          if (v > 0.7) { R("#0a0610", x + 8, y - 30, 4, 3); R("#c33", x + 11, y - 30, 1, 1); }
+        }
+
+        function drawTomb(x, y) {
+          R("#5b5870", x - 6, y - 14, 12, 14); R("#5b5870", x - 4, y - 16, 8, 2);
+          R("#44415a", x + 3, y - 14, 3, 14);
+          R("#2e2c3d", x - 1, y - 12, 2, 7); R("#2e2c3d", x - 3, y - 10, 6, 2);
+          R("#2f4a33", x - 7, y - 2, 14, 2); R("#3d5a3a", x - 6, y - 4, 3, 2);
+        }
+
+        function drawPillar(x, y) {
+          R("#4a4660", x - 6, y - 30, 12, 28); R("#5d5878", x - 6, y - 30, 3, 28); R("#38344a", x + 3, y - 30, 3, 28);
+          R("#38344a", x - 1, y - 28, 1, 24);
+          R("#4a4660", x - 6, y - 33, 4, 3); R("#4a4660", x + 1, y - 35, 5, 5);
+          R("#38344a", x - 8, y - 4, 16, 4); R("#4a4660", x - 8, y - 5, 16, 1);
+          R("#2f4a33", x - 6, y - 18, 2, 10); R("#2f4a33", x - 4, y - 12, 2, 3);
+        }
+
+        const DRAW = { pine: drawPine, oak: drawOak, dead: drawDead, tomb: drawTomb, pillar: drawPillar };
+
+        /* ---------- Jugador ---------- */
+        const player = { x: 0, y: 0, dir: "right", frame: 0, animT: 0, moving: false };
+        const feet = () => ({ x: player.x + 3, y: player.y + 11, w: 6, h: 4 });
+        const cam = { x: 0, y: 0 };
+
+        function solids() {
+          const list = m.boxes.slice();
+          if (m.arc) list.push(m.arc.box);
+          if (m.boss && m.boss.alive) list.push(m.boss.box);
+          if (!m.unlocked) list.push({ x: m.barrierX, y: 0, w: 12, h: m.H });
+          return list;
+        }
+
+        function moveAxis(dx, dy, list) {
+          player.x += dx; player.y += dy;
+          for (const b of list) {
+            const f = feet();
+            if (!overlap(f, b)) continue;
+            if (dx > 0) player.x -= f.x + f.w - b.x;
+            else if (dx < 0) player.x += b.x + b.w - f.x;
+            if (dy > 0) player.y -= f.y + f.h - b.y;
+            else if (dy < 0) player.y += b.y + b.h - f.y;
+          }
+        }
+
+        const beastBox = (b) => ({ x: b.x + 1, y: b.y + 4, w: 18, h: 11 });
+
+        /* ---------- Entrada ---------- */
+        const keys = new Set();
+        const KEYMAP = {
+          ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down",
+          ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right",
+        };
+
+        window.addEventListener("keydown", (e) => {
+          if (!running) return;
+          if (mode === "dialog" && ["Enter", "Space", "KeyE"].includes(e.code)) {
+            e.preventDefault();
+            if (!e.repeat) advanceDialog();
+            return;
+          }
+          const k = KEYMAP[e.code];
+          if (k && mode === "explore") { keys.add(k); e.preventDefault(); }
+        });
+        window.addEventListener("keyup", (e) => { const k = KEYMAP[e.code]; if (k) keys.delete(k); });
+        window.addEventListener("blur", () => keys.clear());
+
+        /* ---------- Bucle ---------- */
+        function resize() {
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          canvas.width = Math.floor(window.innerWidth * dpr);
+          canvas.height = Math.floor(window.innerHeight * dpr);
+          dark.width = canvas.width; dark.height = canvas.height;
+          zoom = Math.max(1, Math.round(canvas.height / 330));
+          viewW = canvas.width / zoom;
+          viewH = canvas.height / zoom;
+        }
+
+        function clampCam(x, y) {
+          x = viewW >= m.W ? (m.W - viewW) / 2 : Math.max(0, Math.min(m.W - viewW, x));
+          y = viewH >= m.H ? (m.H - viewH) / 2 : Math.max(0, Math.min(m.H - viewH, y));
+          return { x, y };
+        }
+
+        function snapCam() {
+          const c0 = clampCam(player.x + PLAYER_W / 2 - viewW / 2, player.y + PLAYER_H / 2 - viewH / 2);
+          cam.x = c0.x; cam.y = c0.y;
+        }
+
+        function update(dt, t) {
+          player.moving = false;
+
+          if (mode === "explore") {
+            let dx = 0, dy = 0;
+            if (keys.has("left")) dx -= 1;
+            if (keys.has("right")) dx += 1;
+            if (keys.has("up")) dy -= 1;
+            if (keys.has("down")) dy += 1;
+
+            if (dx || dy) {
+              const len = Math.hypot(dx, dy);
+              dx = (dx / len) * SPEED * dt;
+              dy = (dy / len) * SPEED * dt;
+              const list = solids();
+              moveAxis(dx, 0, list);
+              moveAxis(0, dy, list);
+              player.x = Math.max(0, Math.min(m.W - PLAYER_W, player.x));
+              player.y = Math.max(56, Math.min(m.H - 40, player.y));
+              player.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+              player.moving = true;
+            }
+
+            // Evento: Unit-A.R.C.
+            if (m.arc && !flags.arcSolved) {
+              const b = m.arc.box;
+              if (overlap(feet(), { x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 })) openPuzzle();
+            }
+
+            // Evento: Bestia Mágica → combate
+            for (const b of m.beasts) {
+              if (b.alive && overlap(feet(), beastBox(b))) { encounter(b); break; }
+            }
+
+            // Evento: el Lexicon Golem despierta al acercarse y combate al tocarlo
+            if (m.boss && m.boss.alive && mode === "explore") {
+              const b = m.boss.box;
+              if (overlap(feet(), { x: b.x - 4, y: b.y - 4, w: b.w + 8, h: b.h + 8 })) {
+                m.boss.awake = true;
+                sfx.roar();
+                startDialog(GOLEM_WAKE, () => encounter(m.boss));
+              }
+            }
+
+            if (m.unlocked && player.x > m.W - 30) exitLevel();
+          }
+
+          // Bestias: patrullan alrededor de su guarida
+          for (const b of m.beasts) {
+            if (!b.alive || mode === "combat") continue;
+            const nx = b.homeX + Math.sin(t * 0.8 + b.phase) * 16;
+            b.flip = nx > b.x;
+            b.x = nx;
+            if (Math.random() < dt * 3) {
+              particles.push({ x: b.x + 4 + Math.random() * 12, y: b.y + 6, vx: (Math.random() - 0.5) * 6, vy: -12 - Math.random() * 10,
+                               life: 1.2, max: 1.2, c: b.def.aura });
+            }
+          }
+
+          if (player.moving) {
+            player.animT += dt;
+            if (player.animT > 0.14) {
+              player.animT = 0;
+              player.frame = player.frame === 1 ? 2 : 1;
+              sfx.step();
+            }
+          } else {
+            player.frame = 0;
+            player.animT = 0.14;
+          }
+
+          const target = clampCam(player.x + PLAYER_W / 2 - viewW / 2, player.y + PLAYER_H / 2 - viewH / 2);
+          const k = Math.min(1, dt * 6);
+          cam.x += (target.x - cam.x) * k;
+          cam.y += (target.y - cam.y) * k;
+
+          if (m.arc && !flags.arcSolved && Math.random() < dt * 2.5) {
+            for (let i = 0; i < 3; i++) {
+              particles.push({ x: m.arc.x + 8, y: m.arc.y + 4, vx: (Math.random() - 0.5) * 40, vy: -20 - Math.random() * 30,
+                               life: 0.5, max: 0.5, c: "#ff9a3c", grav: 80 });
+            }
+          }
+
+          if (m.unlocked && m.barrierAlpha > 0) m.barrierAlpha = Math.max(0, m.barrierAlpha - dt * 0.7);
+
+          particles = particles.filter((p) => (p.life -= dt) > 0);
+          for (const p of particles) {
+            p.vy += (p.grav || 0) * dt;
+            p.x += p.vx * dt; p.y += p.vy * dt;
+          }
+        }
+
+        function lightHole(sx, sy, r, a) {
+          const gr = dg.createRadialGradient(sx, sy, 0, sx, sy, r);
+          gr.addColorStop(0, `rgba(0,0,0,${a})`);
+          gr.addColorStop(1, "rgba(0,0,0,0)");
+          dg.fillStyle = gr;
+          dg.fillRect(sx - r, sy - r, r * 2, r * 2);
+        }
+
+        function render(t) {
+          g.setTransform(1, 0, 0, 1, 0, 0);
+          g.imageSmoothingEnabled = false;
+          g.fillStyle = "#07040c";
+          g.fillRect(0, 0, canvas.width, canvas.height);
+
+          const ox = -Math.round(cam.x * zoom), oy = -Math.round(cam.y * zoom);
+          g.setTransform(zoom, 0, 0, zoom, ox, oy);
+          g.drawImage(m.ground, 0, 0);
+
+          for (const mu of m.mushrooms) {
+            R("#d8f6ff", mu.x, mu.y - 2, 2, 1); R("#6fd6c0", mu.x, mu.y - 1, 2, 1);
+          }
+
+          // Ordenación por profundidad (Y)
+          const items = [];
+          for (const o of m.obstacles) {
+            if (o.bx < cam.x - 30 || o.bx > cam.x + viewW + 30 || o.by < cam.y - 4 || o.by > cam.y + viewH + 60) continue;
+            items.push(o);
+          }
+          if (m.arc) items.push({ type: "arc", by: m.arc.y + 23 });
+          for (const b of m.beasts) if (b.alive) items.push({ type: "beast", ref: b, by: b.y + 14 });
+          if (m.boss && m.boss.alive) items.push({ type: "golem", by: m.boss.y + 60 });
+          items.push({ type: "abel", by: player.y + PLAYER_H });
+          items.sort((a, b) => a.by - b.by);
+
+          for (const it of items) {
+            if (it.type === "abel") {
+              const px = Math.round(player.x), py = Math.round(player.y);
+              g.globalAlpha = 0.35; R("#000", px + 2, py + 14, 8, 2); g.globalAlpha = 1;
+              const bob = player.moving && player.frame === 1 ? -1 : 0;
+              g.drawImage(SPRITES[player.dir][player.frame], px, py + bob);
+            } else if (it.type === "arc") {
+              drawArc(g, m.arc.x, m.arc.y, t, flags.arcSolved);
+            } else if (it.type === "beast") {
+              const b = it.ref;
+              drawBeastSmall(g, Math.round(b.x), b.y, t, b.def.pal, b.flip, b.def.horns);
+            } else if (it.type === "golem") {
+              g.globalAlpha = 0.4; R("#000", m.boss.x + 8, m.boss.y + 57, 40, 4); g.globalAlpha = 1;
+              g.drawImage(GOLEM_IMG[1], m.boss.x, m.boss.y);
+            } else {
+              DRAW[it.type](it.bx, it.by, it.v);
+            }
+          }
+
+          // ---- Oscuridad con fuentes de luz ----
+          dg.globalCompositeOperation = "source-over";
+          dg.clearRect(0, 0, dark.width, dark.height);
+          dg.fillStyle = `rgba(6, 2, 16, ${m.pal.darkness})`;
+          dg.fillRect(0, 0, dark.width, dark.height);
+          dg.globalCompositeOperation = "destination-out";
+          const S = (wx, wy) => [(wx - cam.x) * zoom, (wy - cam.y) * zoom];
+          const [ax, ay] = S(player.x + 6, player.y + 8);
+          lightHole(ax, ay, (115 + Math.sin(t * 2.3) * 4) * zoom, 1);
+          if (m.arc) {
+            const [rx, ry] = S(m.arc.x + 8, m.arc.y + 8);
+            lightHole(rx, ry, 36 * zoom, flags.arcSolved ? 0.85 : 0.5);
+          }
+          for (const b of m.beasts) {
+            if (!b.alive) continue;
+            const [bx, by] = S(b.x + 10, b.y + 6);
+            lightHole(bx, by, 26 * zoom, 0.45);
+          }
+          if (m.boss && m.boss.alive) {
+            const [gx, gy] = S(m.boss.x + 28, m.boss.y + 16);
+            lightHole(gx, gy, (m.boss.awake ? 60 : 38) * zoom, m.boss.awake ? 0.75 : 0.45);
+          }
+          if (m.barrierAlpha > 0) {
+            for (let y = 60; y < m.H; y += 60) {
+              const [bx, by] = S(m.barrierX + 6, y);
+              lightHole(bx, by, 55 * zoom, 0.7 * m.barrierAlpha);
+            }
+          }
+          for (const mu of m.mushrooms) {
+            const [mx, my] = S(mu.x + 1, mu.y - 1);
+            lightHole(mx, my, 10 * zoom, 0.45 + Math.sin(t * 1.5 + mu.p) * 0.15);
+          }
+          g.setTransform(1, 0, 0, 1, 0, 0);
+          g.drawImage(dark, 0, 0);
+
+          // ---- Capa luminosa (aditiva) ----
+          g.setTransform(zoom, 0, 0, zoom, ox, oy);
+          g.globalCompositeOperation = "lighter";
+
+          for (const w of m.wisps) {
+            const wx = w.x + Math.sin(t * 0.4 + w.p) * 20;
+            const wy = w.y + Math.cos(t * 0.3 + w.p * 1.3) * 12;
+            if (wx < cam.x - 5 || wx > cam.x + viewW + 5 || wy < cam.y - 5 || wy > cam.y + viewH + 5) continue;
+            const a = 0.5 + 0.5 * Math.sin(t * 2 + w.p);
+            g.globalAlpha = a * 0.25; R(w.c, wx - 1, wy - 1, 3, 3);
+            g.globalAlpha = a; R(w.c, wx, wy, 1, 1);
+          }
+
+          // Ojos brillantes de las bestias
+          for (const b of m.beasts) {
+            if (!b.alive) continue;
+            const ex = b.flip ? Math.round(b.x) + 16 : Math.round(b.x) + 2;
+            g.globalAlpha = 0.6 + Math.sin(t * 4 + b.phase) * 0.3;
+            R(b.def.pal.eye, ex, b.y + 5, 2, 1);
+            g.globalAlpha = 0.2;
+            R(b.def.pal.eye, ex - 1, b.y + 4, 4, 3);
+          }
+
+          // Ojos del Gólem: dormidos (tenues) o despiertos (brillantes y parpadeando)
+          if (m.boss && m.boss.alive) {
+            const near = Math.hypot(player.x - (m.boss.x + 28), player.y - (m.boss.y + 40)) < 140;
+            const on = m.boss.awake ? ((t * 8) | 0) % 2 === 0 : true;
+            const a = m.boss.awake ? 1 : near ? 0.75 + Math.sin(t * 6) * 0.25 : 0.3 + Math.sin(t * 1.5) * 0.15;
+            if (on) {
+              g.globalAlpha = a;
+              R("#ff2a2a", m.boss.x + 21, m.boss.y + 13, 4, 2); R("#ff2a2a", m.boss.x + 31, m.boss.y + 13, 4, 2);
+              g.globalAlpha = a * 0.3;
+              R("#ff2a2a", m.boss.x + 19, m.boss.y + 11, 8, 6); R("#ff2a2a", m.boss.x + 29, m.boss.y + 11, 8, 6);
+            }
+          }
+
+          // Halo roto de Abel
+          g.globalAlpha = 0.45 + Math.sin(t * 3) * 0.2;
+          const hx = Math.round(player.x), hy = Math.round(player.y) - 2;
+          R("#e3b341", hx + 3, hy, 2, 1); R("#e3b341", hx + 6, hy, 3, 1);
+
+          // Sello mágico del borde derecho
+          if (m.barrierAlpha > 0) {
+            const BX = m.barrierX;
+            g.globalAlpha = m.barrierAlpha * 0.22;
+            R("#7a3cff", BX, 40, 12, m.H - 40);
+            g.globalAlpha = m.barrierAlpha;
+            for (let y = 40; y < m.H; y += 3) {
+              const o = Math.sin(t * 4 + y * 0.15) * 2;
+              R((y / 3 | 0) % 5 === 0 ? "#f0d0ff" : "#9a5cff", Math.round(BX + 4 + o), y, 3, 2);
+            }
+            for (let k = 0; k < 12; k++) {
+              const y = ((k * 53 + t * 24) % (m.H - 40)) + 40;
+              R("#ffe9ff", BX + 5, y | 0, 2, 4);
+            }
+          }
+
+          if (m.arc && !flags.arcSolved) {
+            const bob = Math.round(Math.sin(t * 4) * 1.5);
+            g.globalAlpha = 0.9;
+            R("#ffcf5a", m.arc.x + 7, m.arc.y - 12 + bob, 2, 5);
+            R("#ffcf5a", m.arc.x + 7, m.arc.y - 6 + bob, 2, 2);
+          }
+
+          for (const p of particles) {
+            g.globalAlpha = Math.max(0, p.life / p.max);
+            R(p.c, Math.round(p.x), Math.round(p.y), 1, 1);
+          }
+
+          g.globalAlpha = 1;
+          g.globalCompositeOperation = "source-over";
+
+          g.setTransform(1, 0, 0, 1, 0, 0);
+          for (let i = 0; i < 3; i++) {
+            const fx0 = ((i * 0.37 + t * 0.012 * (i + 1)) % 1.4 - 0.2) * canvas.width;
+            const fy0 = canvas.height * (0.3 + i * 0.25);
+            const fr = canvas.height * 0.55;
+            const fg = g.createRadialGradient(fx0, fy0, 0, fx0, fy0, fr);
+            fg.addColorStop(0, `rgba(${m.pal.fog}, 0.07)`);
+            fg.addColorStop(1, `rgba(${m.pal.fog}, 0)`);
+            g.fillStyle = fg;
+            g.fillRect(fx0 - fr, fy0 - fr, fr * 2, fr * 2);
+          }
+        }
+
+        let last = 0;
+        function frame(ts) {
+          const t = ts / 1000;
+          const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
+          last = ts;
+          update(dt, t);
+          if (mode !== "combat") render(t); // la pantalla de combate tapa el mapa
+          requestAnimationFrame(frame);
+        }
+
+        /* ---------- HUD ---------- */
+        function setObjective(en, es) {
+          objEn.textContent = en;
+          objEs.textContent = es;
+          restartClass(objBox, "updated");
+        }
+
+        function setObjectiveForMap() {
+          if (m.beasts.length) {
+            const d = m.beasts.filter((b) => !b.alive).length, n = m.beasts.length;
+            setObjective(`Defeat the Magic Beasts (${d}/${n})`, `Derrota a las Bestias Mágicas (${d}/${n})`);
+          } else {
+            setObjective(...m.def.objective);
+          }
+        }
+
+        function updateStats() {
+          hudHp.textContent = `HP ${stats.hp}/${stats.maxHp}`;
+          hudLp.textContent = `LP ${stats.lp}`;
+          restartClass(hudHp, "updated");
+          restartClass(hudLp, "updated");
+        }
+
+        /* ---------- Diálogos ---------- */
+        const dialogEl = $("dialog");
+        const dlgName  = $("dlg-name");
+        const dlgEn    = $("dlg-en");
+        const dlgEs    = $("dlg-es");
+        const dlgNext  = $("dlg-next");
+        const pctx     = $("portrait").getContext("2d");
+
+        const dlg = { lines: [], i: 0, typing: false, timer: null, onDone: null };
+
+        function drawPortrait(who) {
+          pctx.imageSmoothingEnabled = false;
+          pctx.fillStyle = "#140e20";
+          pctx.fillRect(0, 0, 24, 24);
+          if (who === "arc") drawArc(pctx, 4, 1, performance.now() / 1000, flags.arcSolved);
+          else if (who === "golem") {
+            pctx.drawImage(GOLEM_IMG[1], 16, 2, 24, 24, 0, 0, 24, 24);
+            pctx.fillStyle = "#ff2a2a";
+            pctx.fillRect(5, 11, 4, 2); pctx.fillRect(15, 11, 4, 2);
+          } else pctx.drawImage(SPRITES.down[0], 6, 5);
+        }
+
+        function startDialog(lines, onDone) {
+          mode = "dialog";
+          keys.clear();
+          dlg.lines = lines; dlg.i = 0; dlg.onDone = onDone || null;
+          dialogEl.classList.add("show");
+          showLine();
+        }
+
+        function showLine() {
+          const L = dlg.lines[dlg.i];
+          dlgName.textContent = L.name;
+          drawPortrait(L.who);
+          dlgEn.textContent = ""; dlgEs.textContent = "";
+          dlgNext.style.visibility = "hidden";
+          dlg.typing = true;
+          let n = 0;
+          clearInterval(dlg.timer);
+          dlg.timer = setInterval(() => {
+            n++;
+            dlgEn.textContent = L.en.slice(0, n);
+            if (n % 2 === 0 && L.en[n - 1] !== " ") (L.who === "arc" ? sfx.robot : L.who === "golem" ? sfx.golemType : sfx.type)();
+            if (n >= L.en.length) finishLine();
+          }, 28);
+        }
+
+        function finishLine() {
+          clearInterval(dlg.timer);
+          const L = dlg.lines[dlg.i];
+          dlgEn.textContent = L.en;
+          dlgEs.textContent = L.es;
+          dlg.typing = false;
+          dlgNext.style.visibility = "visible";
+        }
+
+        function advanceDialog() {
+          if (dlg.typing) { finishLine(); return; }
+          dlg.i++;
+          if (dlg.i >= dlg.lines.length) {
+            dialogEl.classList.remove("show");
+            mode = "explore";
+            if (dlg.onDone) dlg.onDone();
+          } else {
+            showLine();
+          }
+        }
+        dialogEl.addEventListener("click", advanceDialog);
+
+        /* ---------- Puzzle de Unit-A.R.C. ---------- */
+        const puzzleEl  = $("puzzle");
+        const panelEl   = $("puzzle-panel");
+        const tilesEl   = $("tiles");
+        const feedback  = $("puzzle-feedback");
+        const checkBtn  = $("check-btn");
+        const WORDS = ["is", "Unit-A.R.C.", "robot", "a"];
+        const ANSWER = "Unit-A.R.C. is a robot";
+
+        function openPuzzle() {
+          mode = "puzzle";
+          keys.clear();
+          sfx.open();
+          tilesEl.innerHTML = "";
+          for (const w of WORDS) {
+            const b = document.createElement("div");
+            b.className = "tile";
+            b.textContent = w;
+            b.dataset.word = w;
+            b.tabIndex = 0;
+            b.setAttribute("role", "button");
+            b.setAttribute("aria-label", `${w} — use left/right arrows to move`);
+            tilesEl.appendChild(b);
+          }
+          feedback.textContent = "";
+          feedback.className = "";
+          checkBtn.disabled = false;
+          puzzleEl.classList.add("show");
+          setTimeout(() => tilesEl.firstElementChild && tilesEl.firstElementChild.focus(), 350);
+        }
+
+        const currentOrder = () => [...tilesEl.children].map((t) => t.dataset.word).join(" ");
+
+        function checkOrder(auto) {
+          if (flags.arcSolved) return;
+          if (currentOrder() === ANSWER) {
+            flags.arcSolved = true;
+            checkBtn.disabled = true;
+            [...tilesEl.children].forEach((t) => { t.classList.add("correct"); t.tabIndex = -1; });
+            feedback.className = "good";
+            feedback.textContent = "✔ Unit-A.R.C. is a robot.  ·  ¡Núcleo reparado!";
+            sfx.solve();
+            setTimeout(() => {
+              puzzleEl.classList.remove("show");
+              startDialog(ARC_LINES, unlockBarrier);
+            }, 1700);
+          } else if (!auto) {
+            sfx.wrong();
+            feedback.className = "bad";
+            feedback.textContent = "✖ Syntax error. Try again.  ·  Error de sintaxis. Inténtalo de nuevo.";
+            restartClass(panelEl, "shake");
+          }
+        }
+        checkBtn.addEventListener("click", () => checkOrder(false));
+
+        let drag = null;
+        tilesEl.addEventListener("pointerdown", (e) => {
+          const tile = e.target.closest(".tile");
+          if (!tile || flags.arcSolved || drag) return;
+          e.preventDefault();
+          const r = tile.getBoundingClientRect();
+          const ph = document.createElement("div");
+          ph.className = "tile placeholder";
+          ph.textContent = tile.textContent;
+          tilesEl.insertBefore(ph, tile);
+          // El panel tiene transform: movemos la ficha a <body> para que position:fixed sea relativo a la ventana
+          document.body.appendChild(tile);
+          tile.classList.add("dragging");
+          tile.style.width = r.width + "px";
+          tile.style.left = r.left + "px";
+          tile.style.top = r.top + "px";
+          drag = { tile, ph, offX: e.clientX - r.left, offY: e.clientY - r.top };
+          sfx.pick();
+        });
+
+        window.addEventListener("pointermove", (e) => {
+          if (!drag) return;
+          drag.tile.style.left = e.clientX - drag.offX + "px";
+          drag.tile.style.top = e.clientY - drag.offY + "px";
+          const others = [...tilesEl.children].filter((c) => c !== drag.ph);
+          const before = others.find((c) => {
+            const b = c.getBoundingClientRect();
+            return e.clientY < b.bottom && (e.clientY < b.top || e.clientX < b.left + b.width / 2);
+          });
+          if (before) { if (drag.ph.nextSibling !== before) tilesEl.insertBefore(drag.ph, before); }
+          else if (tilesEl.lastElementChild !== drag.ph) tilesEl.appendChild(drag.ph);
+        });
+
+        function endDrag() {
+          if (!drag) return;
+          const { tile, ph } = drag;
+          tile.classList.remove("dragging");
+          tile.style.cssText = "";
+          tilesEl.replaceChild(tile, ph);
+          drag = null;
+          sfx.drop();
+          checkOrder(true);
+        }
+        window.addEventListener("pointerup", endDrag);
+        window.addEventListener("pointercancel", endDrag);
+
+        tilesEl.addEventListener("keydown", (e) => {
+          const tile = e.target.closest(".tile");
+          if (!tile || flags.arcSolved) return;
+          if (e.key === "ArrowLeft" && tile.previousElementSibling) {
+            tilesEl.insertBefore(tile, tile.previousElementSibling);
+          } else if (e.key === "ArrowRight" && tile.nextElementSibling) {
+            tilesEl.insertBefore(tile.nextElementSibling, tile);
+          } else return;
+          e.preventDefault();
+          tile.focus();
+          sfx.drop();
+          checkOrder(true);
+        });
+
+        /* ---------- Encuentros con Bestias Mágicas ---------- */
+        function encounter(b) {
+          mode = "combat";
+          keys.clear();
+          sfx.encounter();
+          restartClass(root, "encounter");
+          setTimeout(() => {
+            Combat.start(b.def, {
+              hp: stats.hp,
+              maxHp: stats.maxHp,
+              onEnd: (res) => afterCombat(b, res),
+            });
+          }, 750);
+        }
+
+        function afterCombat(b, res) {
+          if (b.def.boss) {           // Jefe derrotado → cinemática final del Reino 1
+            b.alive = false;
+            stats.lp += res.lp;
+            stats.hp = stats.maxHp;
+            updateStats();
+            mode = "transition";
+            Finale.play({ accuracy: res.accuracy, reviewed: res.reviewed, lp: stats.lp });
+            return;
+          }
+          root.classList.remove("encounter");
+          b.alive = false;
+          for (let i = 0; i < 60; i++) {
+            particles.push({ x: b.x + 10, y: b.y + 7, vx: (Math.random() - 0.5) * 70, vy: -Math.random() * 60,
+                             life: 0.6 + Math.random(), max: 1.6, c: Math.random() < 0.5 ? b.def.aura : "#fbe7a1" });
+          }
+          stats.lp += res.lp;
+          stats.hp = Math.min(stats.maxHp, res.hp + 25); // la victoria restaura parte de la luz de Abel
+          updateStats();
+          setObjectiveForMap();
+          mode = "explore";
+          if (m.beasts.every((x) => !x.alive)) setTimeout(() => startDialog(HOLLOW_CLEAR, unlockBarrier), 500);
+        }
+
+        /* ---------- Desbloqueo, salida y transición de mapas ---------- */
+        function unlockBarrier() {
+          m.unlocked = true;
+          sfx.unlock();
+          for (let i = 0; i < 180; i++) {
+            particles.push({
+              x: m.barrierX + 2 + Math.random() * 8, y: 40 + Math.random() * (m.H - 40),
+              vx: (Math.random() - 0.3) * 50, vy: -10 - Math.random() * 40,
+              life: 1 + Math.random() * 1.2, max: 2.2, c: Math.random() < 0.5 ? "#d9b3ff" : "#fbe7a1",
+            });
+          }
+          setObjective("The eastern seal is broken. Head east →", "El sello del este se ha roto. Dirígete al este →");
+          exitArrow.classList.add("show");
+        }
+
+        const fade = $("fade");
+        function showFade(label, title, sub) {
+          $("fade-label").textContent = label;
+          $("fade-title").innerHTML = title;
+          $("fade-sub").textContent = sub;
+          fade.classList.add("show");
+        }
+
+        function exitLevel() {
+          mode = "transition";
+          keys.clear();
+          exitArrow.classList.remove("show");
+          sfx.exit();
+          const next = m.def.next;
+          if (next) {
+            const nd = MAPS[next];
+            showFade(`— SUB-LEVEL ${next} —`, `Entering Sub-level ${next}:<br><span style="color:var(--gold)">${nd.name}</span>`, "");
+            setTimeout(() => {
+              loadMap(next);
+              fade.classList.remove("show");
+              setTimeout(() => startDialog(nd.intro), 1300);
+            }, 3600);
+          } else {
+            showFade(`— SUB-LEVEL ${m.id} —`, `Sub-level ${m.id} Cleared<br>· ${m.def.name} ·`,
+                     `TOTAL: ${stats.lp} LINGUA POINTS · NEXT: SUB-LEVEL 1.3 — COMING SOON`);
+          }
+        }
+
+        function loadMap(id) {
+          m = buildMap(MAPS[id]);
+          player.x = m.start.x; player.y = m.start.y;
+          player.dir = "right"; player.frame = 0;
+          particles = [];
+          hudLevel.textContent = `SUB-LEVEL ${id} · ${m.def.name.toUpperCase()}`;
+          exitArrow.classList.remove("show");
+          setObjectiveForMap();
+          snapCam();
+          mode = "idle";
+        }
+
+        /* ---------- Arranque ---------- */
+        function start(levelId = "1.1") {
+          if (running) return;
+          running = true;
+          resize();
+          window.addEventListener("resize", resize);
+          loadMap(levelId);
+          updateStats();
+          root.classList.add("on");
+          requestAnimationFrame(() => root.classList.add("show"));
+          requestAnimationFrame(frame);
+          const q = new URLSearchParams(location.search);
+          if (!q.has("battle") && !q.has("finale")) setTimeout(() => startDialog(MAPS[levelId].intro), 1400);
+          else mode = "explore";
+        }
+
+        function debugBattle(kind) {
+          if (kind === "golem") { if (m.boss) { m.boss.awake = true; encounter(m.boss); } return; }
+          const b = m.beasts.find((x) => x.kind === kind && x.alive);
+          if (b) encounter(b);
+        }
+
+        return { start, debugBattle };
+      })();
+
+      /* =====================================================
+         ARRANQUE GENERAL
+         ===================================================== */
+      if (skipToGame) {
+        introDone = true;
+        started = true;
+        intro.remove(); startWrap.remove(); skipHint.remove(); levelMsg.remove();
+        Game.start(startLevel);
+        // Atajos de pruebas: ?level=1.2&battle=umbral|fang|alpha · ?level=1.3&battle=golem · ?finale
+        const battle = params.get("battle");
+        if (startLevel === "1.2" && BEASTS[battle]) setTimeout(() => Game.debugBattle(battle), 600);
+        if (startLevel === "1.3" && battle === "golem") setTimeout(() => Game.debugBattle("golem"), 600);
+        if (params.has("finale")) setTimeout(() => Finale.play({ accuracy: 88, reviewed: 2, lp: 480 }), 300);
+      } else {
+        const begin = () => requestAnimationFrame(startCrawl);
+        if (document.fonts && document.fonts.ready) {
+          Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]).then(begin);
+        } else {
+          window.addEventListener("load", begin);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

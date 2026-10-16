@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#3a4a2c">
+<canvas id="c" width="1500" height="900" style="image-rendering:pixelated"></canvas>
+<script type="module">
+import { preloadAtlases, ATLAS } from "./src/graphics/Atlas.js";
+const ids = ["abel","aria","benny","mileva","chloe","arc","karr","skoll","rufus","shela","pyrus","ignis"];
+await preloadAtlases(ids);
+const c = document.getElementById("c"), g = c.getContext("2d"); g.imageSmoothingEnabled = false;
+const S = 2;
+function frame(ts){
+  const t = ts/1000;
+  g.setTransform(1,0,0,1,0,0); g.fillStyle="#3a4a2c"; g.fillRect(0,0,c.width,c.height);
+  g.setTransform(S,0,0,S,0,0);
+  const anims = ["idle","walk","run","attack1","attack2"];
+  ids.forEach((id,k)=>{
+    const a = ATLAS[id]; if(!a) return;
+    const col = k % 6, row = Math.floor(k/6);
+    anims.forEach((an,j)=>{ const x = 40 + col*120 + (j%1)*0, y = 60 + row*200 + j*36;
+      const n=a.count(an); if(!n) return; const i = Math.floor(t*10)%n;
+      g.fillStyle="rgba(0,0,0,.25)"; g.fillRect(x-10,y,20,1);
+      a.draw(g, an, i, x, y);
+    });
+    g.fillStyle="#fff"; g.font="6px monospace"; g.fillText(id, 30+col*120, 12+row*200);
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>

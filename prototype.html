@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evil-Angel</title>
+  <!-- Fuentes pixeladas de la interfaz; sin conexión se usa una monoespaciada -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="frame">
+    <canvas id="gameCanvas" aria-label="Evil-Angel"></canvas>
+  </main>
+
+  <script type="module">
+    import { Engine } from "./src/core/Engine.js";
+    import { TitleScreen } from "./src/core/TitleScreen.js";
+
+    // Arranque: el motor crea el bucle y la pantalla de título toma el control
+    const engine = new Engine(document.getElementById("gameCanvas"));
+    engine.showTitle(new TitleScreen(engine));
+  </script>
+</body>
+</html>

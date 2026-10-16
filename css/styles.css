@@ -1,0 +1,75 @@
+/* =========================================================
+   Evil-Angel
+   Lienzo centrado en un marco gótico: fondo oscuro, filetes dorados finos
+   y remates en las esquinas. El tamaño del canvas lo fija Engine.resize()
+   con un factor entero para que el pixel art no se deforme.
+   ========================================================= */
+
+:root {
+  --void: #07040c;          /* fondo de la página */
+  --void-glow: #1a0f24;     /* halo violeta detrás del lienzo */
+  --gold: #c9a24a;          /* filete exterior */
+  --gold-deep: #6e5320;     /* filete interior */
+  --frame: #0d0814;         /* banda oscura entre filetes */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, var(--void-glow) 0%, var(--void) 70%);
+}
+
+/* Contenedor gótico con remates dorados en las cuatro esquinas */
+.frame {
+  position: relative;
+  line-height: 0;
+}
+
+.frame::before,
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  pointer-events: none;
+  /* remates: cuatro pequeños rombos dorados en las esquinas */
+  background:
+    linear-gradient(45deg, transparent 42%, var(--gold) 42% 58%, transparent 58%) top left / 14px 14px no-repeat,
+    linear-gradient(45deg, transparent 42%, var(--gold) 42% 58%, transparent 58%) top right / 14px 14px no-repeat,
+    linear-gradient(45deg, transparent 42%, var(--gold) 42% 58%, transparent 58%) bottom left / 14px 14px no-repeat,
+    linear-gradient(45deg, transparent 42%, var(--gold) 42% 58%, transparent 58%) bottom right / 14px 14px no-repeat;
+}
+
+.frame::after {
+  inset: -6px;
+  background: none;
+  border: 1px solid rgba(201, 162, 74, 0.35);
+}
+
+#gameCanvas {
+  display: block;
+
+  /* Pixel art nítido: sin suavizado al ampliar */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+
+  border: 2px solid var(--gold);
+  box-shadow:
+    0 0 0 4px var(--frame),
+    0 0 0 5px var(--gold-deep),
+    0 0 40px 8px rgba(201, 162, 74, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+  background: var(--void);
+  cursor: pointer;
+}
