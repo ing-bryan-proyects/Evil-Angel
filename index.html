@@ -2020,7 +2020,8 @@
     // Sprites de personajes y enemigos (hojas recortadas con tools/slice_sheets.py)
     await preloadAtlases(["abel", "aria", "benny", "mileva", "chloe", "arc", "karr", "skoll", "rufus", "shela", "pyrus", "ignis",
       "abel_sp", "aria_sp", "benny_sp", "mileva_sp", "chloe_sp", "arc_sp", "rufus_sp", "shela_sp", "pyrus_sp", "autumn",
-      "abel_loco"]);                                                            // Abel RPG 4 direcciones (hoja 64) — tools/slice_abel_rpg.py
+      "abel_loco",                                                              // Abel RPG 4 direcciones (hoja 64) — tools/slice_abel_rpg.py
+      "draven", "elara", "valerius", "aurelia"]);                               // Reino 2: vampiros — tools/slice_enemy_rpg.py
     await preloadAtlases(allKitAtlases().filter((id) => id !== "autumn"));          // escenografía de las hojas de escenarios (sc35–sc53)
     await loadGroundSheets(allGroundSheets());                                       // baldosas de suelo de cada bioma
 
@@ -2465,7 +2466,7 @@
       const abelMot = new CharMotion(ATLAS.abel, {
         stride: 46, runStride: 70,                                                   // RPG de 4 direcciones (hoja 64): reposo/caminar frente-espalda-lado, correr y esquiva de perfil
         loco: ATLAS.abel_loco,                                                       // idle{S,N,W}, walk{S,N,W}, runW, dashW — la derecha (E) es el perfil izquierdo reflejado
-        extra: { fly: { atlas: ATLAS.abel_sp, anim: "fly", frames: [0, 1, 2] } },   // nadar reutiliza la locomoción recortada; volar con las alas de abel_sp
+        extra: { swim: ATLAS.abel, fly: { atlas: ATLAS.abel_sp, anim: "fly", frames: [0, 1, 2] } },   // nado con pose propia (brazadas) y vuelo con las alas de abel_sp
       });
       const abelPrev = { x: 0, y: 0, init: false };
       /** Elige animación y fotograma del atlas de Abel según su estado de combate. */
@@ -4662,6 +4663,17 @@
             foliageAlt: ["#24141a", "#341c26", "#462634", "#5a3242", "#704052", "#8a5266"],
             scorch: 50, cracks: 80,
           },
+          vampire: {                                              // Reino 2: noche vampírica, piedra ensangrentada
+            ground: ["#120a10", "#160b12", "#1c0e16"], moss: ["#241018", "#1c0c14"], path: ["#2a1620", "#381e2a"],
+            pebble: ["#4a2a38", "#120a10"], grass: ["#2a1620", "#48203a", "#2a1222"], leaves: ["#3a1424", "#2a1020"],
+            purple: 0.55, darkness: 0.78, wisps: ["#ff4a6a", "#b85aff"], fog: "120, 30, 50", bones: true, tiles: true,
+            bands: ["#241820", "#2e1e28", "#3a2632", "#48303e", "#5a3c4c"],
+            pathTones: ["#2e1c26", "#45303c", "#5a3e4c", "#70505e"],
+            tuft: ["#2a1420", "#48203a", "#5a2c46", "#7a3c5e"],
+            foliage: ["#1a0c12", "#261018", "#341824", "#442030", "#5a2a40", "#6e3650"],
+            foliageAlt: ["#200814", "#30101f", "#421528", "#562036", "#6c2a46", "#86345a"],
+            scorch: 60, cracks: 90,
+          },
         };
 
         const PEAKS_CLEAR = [
@@ -4674,9 +4686,15 @@
         const BOSS_INTRO = {
           karrAlpha: [{ who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... An Alpha Karr guards these ruins. Build his sentences to break his guard.", es: "Bzzt... Un Karr Alfa vigila estas ruinas. Construye sus frases para romper su guardia." }],
           skollQueen: [{ who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... The Skoll Queen rules this den. Defeat her to finish level A1.", es: "Bzzt... La Reina Sköll gobierna esta guarida. Derrótala para terminar el nivel A1." }],
+          valerius: [{ who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... Valerius, the Vampire King, holds this castle. Master your modals to shatter his will.", es: "Bzzt... Valerius, el Rey Vampiro, domina este castillo. Domina los modales para quebrar su voluntad." }],
+          aurelia: [{ who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... Aurelia, the Vampire Queen, awaits in the throne room. This is the end of the Blood Realm.", es: "Bzzt... Aurelia, la Reina Vampiresa, aguarda en el salón del trono. Es el final del Reino de Sangre." }],
+          pyrus: [{ who: "arc", name: "UNIT-A.R.C. (RADIO)", en: "Bzzt... The vampires chained a Fire Golem, Pyrus, in this crypt. Use the passive voice to cool its fury.", es: "Bzzt... Los vampiros encadenaron a un Gólem de Fuego, Pyrus, en esta cripta. Usa la voz pasiva para enfriar su furia." }],
         };
         WILD_BOSS_LINES.karrAlpha = [{ who: "abel", name: "ABEL", en: "A huge wolf... His eyes are fire. I must be brave.", es: "Un lobo enorme... Sus ojos son fuego. Debo ser valiente." }];
         WILD_BOSS_LINES.skollQueen = [{ who: "abel", name: "ABEL", en: "The queen of the pack. Her fur is ice. Here we go!", es: "La reina de la manada. Su pelaje es hielo. ¡Allá vamos!" }];
+        WILD_BOSS_LINES.valerius = [{ who: "abel", name: "ABEL", en: "The Vampire King... His cloak drinks the light. Stay sharp.", es: "El Rey Vampiro... Su capa bebe la luz. Mantente alerta." }];
+        WILD_BOSS_LINES.aurelia = [{ who: "abel", name: "ABEL", en: "The Vampire Queen. The air smells of roses and blood. For the dawn!", es: "La Reina Vampiresa. El aire huele a rosas y sangre. ¡Por el alba!" }];
+        WILD_BOSS_LINES.pyrus = [{ who: "abel", name: "ABEL", en: "A golem of molten obsidian... The heat is unbearable. Stand firm.", es: "Un gólem de obsidiana fundida... El calor es insoportable. Mantente firme." }];
 
         const BIOME_SCATTER = {
           // Los tipos que el kit del bioma no cubre con arte se descartan solos (WorldBuilder + Kits).
@@ -4686,6 +4704,7 @@
           peaks: { pine: 0.24, oak: 0.06, dead: 0.07, rock: 0.12, crag: 0.1, log: 0.03, stump: 0.02, plant: 0.4, crystal: 0.025, statue: 0.01, pillar: 0.012, rubble: 0.02 },
           amber: { oak: 0.16, pine: 0.06, dead: 0.09, rock: 0.09, crag: 0.045, plant: 0.62, log: 0.05, pillar: 0.012, rubble: 0.03, bigrubble: 0.02, crate: 0.03, barrel: 0.025, cart: 0.008, fence: 0.03, wall: 0.02, statue: 0.006 },
           sanctum: { pillar: 0.26, wall: 0.16, statue: 0.05, crystal: 0.07, brazier: 0.04, plant: 0.28, dead: 0.07, rubble: 0.05 },
+          vampire: { pillar: 0.2, wall: 0.2, tomb: 0.16, statue: 0.08, rubble: 0.08, bigrubble: 0.05, brazier: 0.06, crystal: 0.05, fence: 0.06, crag: 0.03, dead: 0.04 },
         };
         const BIOME_RIM = {
           peaks: (r) => (r < 0.7 ? "pine" : r < 0.88 ? "dead" : "oak"),
@@ -4694,9 +4713,10 @@
           hollow: (r) => (r < 0.45 ? "dead" : r < 0.75 ? "oak" : "pine"),
           marsh: (r) => (r < 0.45 ? "oak" : r < 0.75 ? "dead" : "pine"),
           forest: (r) => (r < 0.6 ? "oak" : r < 0.85 ? "pine" : "dead"),
+          vampire: (r) => (r < 0.5 ? "pillar" : r < 0.8 ? "dead" : "wall"),
         };
         const GOAL_LINES = {
-          kills: (n) => [`Defeat ${n} wolves to break the seal.`, `Derrota a ${n} lobos para romper el sello.`],
+          kills: (n) => [`Defeat ${n} enemies to break the seal.`, `Derrota a ${n} enemigos para romper el sello.`],
           summit: () => ["Climb the mountain by the stairs and take the Dawn Sigil from the summit.", "Sube la montaña por las escaleras y toma el Sello del Alba de la cima."],
           boss: () => ["Find the boss in the ruins. Win the sentence battle to break the seal.", "Encuentra al jefe en las ruinas. Gana la batalla de frases para romper el sello."],
           puzzle: () => ["Follow the path to the east and repair Unit-A.R.C.", "Sigue el camino y repara a Unit-A.R.C."],
@@ -4721,9 +4741,9 @@
           const def = {
             id: sub.id, name: sub.name, nameEs: sub.es, sub, pal: PAL[sub.biome],
             gen: { R: sub.R, start: sub.start || "rim", reverse: !!sub.reverse, lakes: sub.lakes, hills: sub.hills, houses: sub.houses },
-            stage: `WHISPERING FOREST · ${sub.id} · ${sub.name.toUpperCase()}`, darkness: sub.darkness == null ? undefined : Math.max(0.2, sub.darkness * 0.7),
+            stage: `${(sub.realm === 2 ? "VAMPIRE REALM" : "WHISPERING FOREST")} · ${sub.id} · ${sub.name.toUpperCase()}`, darkness: sub.darkness == null ? undefined : Math.max(0.2, sub.darkness * 0.7),
             allies: sub.allies, shop: sub.shop != null ? { u: sub.shop, below: true } : null, arcU: sub.arcU,
-            torches: sub.torches, interior: sub.interior ?? ({ forest: 420, hollow: 340, marsh: 360, peaks: 340, amber: 340, sanctum: 240 }[sub.biome] ?? 300), scatter: BIOME_SCATTER[sub.biome], rimMix: BIOME_RIM[sub.biome], art: sub.biome,
+            torches: sub.torches, interior: sub.interior ?? ({ forest: 420, hollow: 340, marsh: 360, peaks: 340, amber: 340, sanctum: 240, vampire: 300 }[sub.biome] ?? 300), scatter: BIOME_SCATTER[sub.biome], rimMix: BIOME_RIM[sub.biome], art: sub.art || sub.biome,
             wolves: sub.enemies, loot: { coins: sub.loot[0], relics: sub.loot[1] }, shrine: true, next: nextSub(sub.id), objective: null,
           };
           if (g.type === "kills") def.killGoal = g.n;
@@ -5235,6 +5255,9 @@
           b.toggle("opt-no-hints", !settings.hints);
           b.toggle("opt-no-subs", !settings.subtitles);
           b.toggle("opt-no-flash", !settings.flashes);
+          const mmSize = { small: 84, medium: 112, large: 150 }[settings.minimapSize || "medium"] || 112;   // tamaño del minimapa (ajustes › pantalla)
+          if (minimap.width !== mmSize) { minimap.width = minimap.height = mmSize; if (m) buildMinimapBase(); }
+          minimap.style.width = minimap.style.height = mmSize + "px";
         }
         function applySetting(k, v) {
           settings[k] = v;
@@ -5330,6 +5353,14 @@
           ];
           if (k === 2) items.push({ t: "cupboard", x: X(INT_W - 108, 26), y: 30, w: 26, h: 14, wall: true });
           return { items, flip, k };
+        }
+        let doorAnim = null;                                     // animación de Abel entrando por la puerta (usa la hoja "door")
+        const DOOR_DUR = 0.55;
+        function beginEnterHouse(h) {
+          const d = houseDoorPos(h);
+          player.x = d.x - 8; player.y = d.y - 18; player.dir = "up"; player.moving = false;
+          doorAnim = { t: 0, h, x: d.x, y: d.y };
+          sfx.open?.();
         }
         function enterHouse(h) {
           interiorSt.house = h; interiorSt.ox = player.x; interiorSt.oy = player.y; interiorSt.idx = m.houses.indexOf(h);
@@ -5580,7 +5611,7 @@
             if (shr) { useShrine(shr); return; }
             if (nearShop()) { openShop(); return; }
             const hd = nearHouseDoor();
-            if (hd) { enterHouse(hd); return; }
+            if (hd) { beginEnterHouse(hd); return; }
           }
           if (controls.pressed("punch")) startStrike("punch");
           if (controls.pressed("special")) startStrike("special");
@@ -5678,6 +5709,11 @@
 
         function update(dt, t) {
           if (mode === "interior") { updateInterior(dt, t); return; }
+          if (doorAnim) {                                        // entrando por la puerta: Abel se adentra y luego se abre el interior
+            wind.update(t); doorAnim.t += dt;
+            if (doorAnim.t >= DOOR_DUR) { const h = doorAnim.h; doorAnim = null; enterHouse(h); }
+            return;
+          }
           player.moving = false;
           handleInput();
           if (mode === "explore" && controls.pressed("dash")) startDash();
@@ -6022,6 +6058,12 @@
           m.focus = { x: player.x + 8, y: player.y + 19 };                    // pies de Abel: árboles y casas se vuelven translúcidos si queda detrás
 
           ysort.flush((it) => {
+            if (it.type === "abel" && doorAnim) {               // animación de entrar por la puerta (hoja "door")
+              const n = ATLAS.abel.count("door") || 1, i = Math.min(n - 1, Math.floor((doorAnim.t / DOOR_DUR) * n));
+              const a = doorAnim.t < DOOR_DUR * 0.7 ? 1 : Math.max(0, 1 - (doorAnim.t - DOOR_DUR * 0.7) / (DOOR_DUR * 0.3));
+              g.globalAlpha = a; ATLAS.abel.draw(g, "door", i, Math.round(doorAnim.x), Math.round(doorAnim.y)); g.globalAlpha = 1;
+              return;
+            }
             if (it.type === "abel") {
               const fx = Math.round(player.x + 8), fy0 = Math.round(player.y + 19);
               const jumpLift = jumpSt.t > 0 ? Math.sin((1 - jumpSt.t / JUMP_DUR) * Math.PI) * 11 : 0;   // arco del salto
@@ -6395,7 +6437,7 @@
           }
           if (m.def.killGoal) {
             const d = Math.min(killCount(), m.def.killGoal), n = m.def.killGoal;
-            setObjective(`Defeat the wolves to break the seal (${d}/${n})`, `Derrota a los lobos para romper el sello (${d}/${n})`);
+            setObjective(`Defeat the enemies to break the seal (${d}/${n})`, `Derrota a los enemigos para romper el sello (${d}/${n})`);
             return;
           }
           if (m.def.summitGoal) {
