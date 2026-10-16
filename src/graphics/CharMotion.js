@@ -110,8 +110,14 @@ export class CharMotion {
     // con fotogramas recién recortados de hojas nuevas, mezclar dos siluetas que no encajan pixel a pixel
     // se ve como una doble exposición en vez de un movimiento suave).
     const X0 = this.extra;
+    // Nado con hoja propia (brazadas, torso sobre el agua): su silueta mira a la derecha → se refleja al ir a la izquierda.
+    if ((this.mode === "swim" || this.mode === "tread") && X0.swim && X0.swim.has("swim")) {
+      const flipS = this.card === "W";
+      if (this.mode === "tread") return { atlas: X0.swim, anim: "swim", i: 0, j: 0, b: 0, dir: true, flip: flipS };
+      return { ...loopFrame(X0.swim, "swim"), dir: true, flip: flipS };
+    }
     // Hoja RPG de 4 direcciones: se elige idle/walk/run/dash según la cardinal; la derecha (E) usa el perfil izquierdo reflejado.
-    // El vuelo/flotar se dibujan con su hoja propia (extra.fly); el nado reutiliza la locomoción recortada a la cintura.
+    // El vuelo/flotar se dibujan con su hoja propia (extra.fly).
     const skipLoco = (this.mode === "fly" || this.mode === "hover") && X0.fly;
     if (this.loco && !skipLoco) {
       // El perfil lateral de la hoja 64 mira a la DERECHA; se refleja para ir a la izquierda. Frente (S) y espalda (N) no se reflejan.

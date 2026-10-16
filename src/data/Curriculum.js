@@ -90,6 +90,32 @@ export const SUBLEVELS = Object.freeze([
   { id: "A2.8", level: "A2", n: 8, name: "The Lexicon Sanctum", es: "El Santuario del Léxico", biome: "sanctum", R: 900, focus: "A2 exam: the Lexicon Golem", focusEs: "Examen A2: el Gólem del Léxico",
     tags: ["pastReg", "pastIrr", "future", "presPerf", "compare", "modals", "cond", "quant"], topics: ["adventure", "town", "jobs"], lakes: [], hills: [], houses: [], reverse: true,
     enemies: [], goal: { type: "golem" }, torches: 14, darkness: 0.66, interior: 150, loot: [20, 3] },
+
+  /* ---------------------------- B1 · Reino Vampírico ---------------------------- */
+  { id: "B1.1", level: "B1", n: 1, name: "Crimson Gates", es: "Las Puertas Carmesí", biome: "vampire", art: "vampire", realm: 2, R: 1050, focus: "Past simple vs. past continuous", focusEs: "Pasado simple vs. continuo",
+    tags: ["pastReg", "pastIrr", "presPerf"], topics: ["adventure", "town", "feelings"], lakes: [{ r: [70, 100] }], hills: [], houses: [{ u: 0.5, n: 2 }],
+    enemies: [{ kind: "draven", count: 10 }], goal: { type: "kills", n: 9 }, shop: 0.4, torches: 16, darkness: 0.8, interior: 300, loot: [64, 6] },
+  { id: "B1.2", level: "B1", n: 2, name: "The Blood Court", es: "La Corte de Sangre", biome: "vampire", art: "vampire", realm: 2, R: 1100, focus: "Present perfect vs. past simple", focusEs: "Presente perfecto vs. pasado simple",
+    tags: ["presPerf", "pastIrr", "modals"], topics: ["town", "jobs", "feelings"], lakes: [{ r: [60, 90] }], hills: [{ tiers: 2, r: [112, 128] }], houses: [{ u: 0.3, n: 2 }, { u: 0.72, n: 1 }],
+    enemies: [{ kind: "draven", count: 7 }, { kind: "elara", count: 5 }], goal: { type: "kills", n: 12 }, allies: [{ id: "aria", u: 0.25 }], shop: 0.5, torches: 16, darkness: 0.82, interior: 320, loot: [68, 6] },
+  { id: "B1.3", level: "B1", n: 3, name: "The Scarlet Library", es: "La Biblioteca Escarlata", biome: "vampire", art: "vampire", R: 1150, realm: 2, focus: "Future forms: will / going to / present continuous", focusEs: "Formas de futuro: will / going to / presente continuo",
+    tags: ["future", "presPerf", "modals"], topics: ["town", "jobs", "shopping"], lakes: [{ r: [70, 100] }], hills: [], houses: [{ u: 0.3, n: 2 }, { u: 0.7, n: 1 }],
+    enemies: [{ kind: "draven", count: 7 }, { kind: "elara", count: 6 }], goal: { type: "kills", n: 13 }, shop: 0.45, torches: 16, darkness: 0.84, interior: 320, loot: [68, 6] },
+  { id: "B1.4", level: "B1", n: 4, name: "Throne of Valerius", es: "El Trono de Valerius", biome: "vampire", art: "vampire", R: 1200, realm: 2, focus: "Modals: would / should / must", focusEs: "Modales: would / should / must",
+    tags: ["modals", "cond", "presPerf"], topics: ["adventure", "jobs"], lakes: [{ r: [70, 100] }], hills: [{ tiers: 2, r: [112, 128] }], houses: [{ u: 0.4, n: 1 }],
+    enemies: [{ kind: "draven", count: 5 }, { kind: "elara", count: 4 }], goal: { type: "boss", bosses: ["valerius"] }, ruinSites: [0.3, 0.5, 0.7], torches: 18, darkness: 0.85, interior: 300, loot: [72, 7] },
+  { id: "B1.5", level: "B1", n: 5, name: "Hall of Portraits", es: "La Galería de Retratos", biome: "vampire", art: "vampire", R: 1200, realm: 2, focus: "Relative clauses (who / which / that)", focusEs: "Oraciones de relativo (who / which / that)",
+    tags: ["presPerf", "modals", "cond"], topics: ["town", "feelings", "jobs"], lakes: [{ r: [60, 90] }], hills: [], houses: [{ u: 0.35, n: 2 }, { u: 0.72, n: 2 }],
+    enemies: [{ kind: "elara", count: 8 }, { kind: "draven", count: 5 }], goal: { type: "kills", n: 14 }, allies: [{ id: "benny", u: 0.3 }], shop: 0.4, torches: 16, darkness: 0.85, interior: 320, loot: [70, 6] },
+  { id: "B1.6", level: "B1", n: 6, name: "Crypt of the Fire Golem", es: "La Cripta del Gólem de Fuego", biome: "vampire", art: "vampire", R: 1200, realm: 2, focus: "The passive voice", focusEs: "La voz pasiva",
+    tags: ["presPerf", "pastIrr", "modals", "cond"], topics: ["adventure", "town", "jobs"], lakes: [], hills: [{ tiers: 2, r: [112, 130] }], houses: [{ u: 0.3, n: 1 }],
+    enemies: [{ kind: "draven", count: 5 }, { kind: "elara", count: 4 }], goal: { type: "boss", bosses: ["pyrus"] }, ruinSites: [0.3, 0.5, 0.7], shop: 0.5, torches: 18, darkness: 0.88, interior: 320, loot: [74, 7] },
+  { id: "B1.7", level: "B1", n: 7, name: "The Moonlit Rampart", es: "La Muralla a la Luz de la Luna", biome: "vampire", art: "vampire", R: 1250, realm: 2, focus: "Reported speech & conditionals", focusEs: "Estilo indirecto y condicionales",
+    tags: ["cond", "modals", "presPerf", "compare"], topics: ["adventure", "town", "shopping"], lakes: [{ r: [75, 110], bridge: true }], hills: [], houses: [{ u: 0.4, n: 1 }],
+    enemies: [{ kind: "elara", count: 9 }, { kind: "draven", count: 7 }], goal: { type: "kills", n: 16 }, shop: 0.45, torches: 18, darkness: 0.9, interior: 340, loot: [74, 7] },
+  { id: "B1.8", level: "B1", n: 8, name: "Aurelia's Eternal Throne", es: "El Trono Eterno de Aurelia", biome: "vampire", art: "vampire", R: 1200, realm: 2, reverse: true, focus: "B1 exam: the Vampire Queen", focusEs: "Examen B1: la Reina Vampiresa",
+    tags: ["pastReg", "pastIrr", "presPerf", "future", "modals", "cond", "compare", "quant"], topics: ["adventure", "town", "jobs"], lakes: [], hills: [], houses: [{ u: 0.5, n: 1 }],
+    enemies: [{ kind: "elara", count: 5 }, { kind: "draven", count: 4 }], goal: { type: "boss", bosses: ["aurelia"] }, ruinSites: [0.25, 0.45, 0.65, 0.85], torches: 20, darkness: 0.92, interior: 300, loot: [80, 8] },
 ]);
 
 export const SUB_BY_ID = Object.freeze(Object.fromEntries(SUBLEVELS.map((s) => [s.id, s])));

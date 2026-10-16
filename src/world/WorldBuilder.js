@@ -374,7 +374,7 @@ export function buildMap(def, deps, seed) {
       const sx = acx - 10, sy = acy - 28;                   // el jefe aguarda en el pedestal, al fondo del recinto
       mm.wildBosses.push({
         kind, x: sx, y: sy, alive: !defeated[kind], wild: true, box: { x: sx + 4, y: sy + 20, w: 12, h: 6 },
-        def: { ...e, scale: 1.12, orderBank: PRESENT_PERFECT_ORDER, renderBig: () => renderWerewolfBig(kind, e.pal) },
+        def: { ...e, scale: 1.12, orderBank: PRESENT_PERFECT_ORDER, renderBig: e.atlas && ATLAS[e.atlas] ? null : () => renderWerewolfBig(kind, e.pal) },
       });
       mm.arenas.push({ x: acx, y: acy, kind });
     });

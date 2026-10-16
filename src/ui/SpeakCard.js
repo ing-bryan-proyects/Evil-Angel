@@ -30,8 +30,8 @@ export function runSpeakCard(container, { phrase, es = "", limitMs = 26000, titl
     const $ = (s) => container.querySelector(s);
     const status = $(".sc-status"), meter = $(".sc-meter i"), talk = $('[data-sc="talk"]');
     let busy = false, done = false;
-    const finish = (r) => { if (done) return; done = true; cancel(); window.removeEventListener("keydown", onKey, true); clearTimeout(timer); resolve(r); };
-    const timer = setTimeout(() => finish({ ok: false, score: 0, heard: "", timeout: true }), limitMs);
+    const finish = (r) => { if (done) return; done = true; cancel(); window.removeEventListener("keydown", onKey, true); resolve(r); };
+    // Sin temporizador: la tarjeta espera a que el jugador pulse HABLAR y diga la frase; solo termina al acertar o al saltar (sin presión de tiempo).
     const hear = () => speak(phrase, { rate: 0.85, force: true });
     const say = async () => {
       if (busy || done) return;
@@ -39,13 +39,13 @@ export function runSpeakCard(container, { phrase, es = "", limitMs = 26000, titl
       cancel();                                               // corta cualquier locución del 🔊 para que el micro no se oiga a sí mismo
       await new Promise((r) => setTimeout(r, 120));
       busy = true; talk.classList.add("rec"); talk.textContent = "● LISTENING…"; status.textContent = "Listening… speak now · Escuchando… habla ahora";
-      const r = await listen({ expect: phrase, pass, timeout: 12000 });
-      busy = false; talk.classList.remove("rec"); talk.textContent = "🎤 SPEAK";
-      if (r.unsupported) { status.textContent = "No microphone. · Sin micrófono."; return; }
+      const r = await listen({ expect: phrase, pass, timeout: 15000 });
+      busy = false; talk.classList.remove("rec"); talk.textContent = "🎤 SPEAK AGAIN · HABLAR OTRA VEZ";
+      if (r.unsupported) { status.textContent = "No microphone · Sin micrófono. Press I SAID IT to continue."; talk.textContent = "✔ I SAID IT"; talk.onclick = () => finish({ ok: true, score: 0.7, heard: phrase, assisted: true }); return; }
       meter.style.width = Math.round(r.score * 100) + "%";
       meter.style.background = r.ok ? "linear-gradient(90deg,#4fbf8c,#9dffcf)" : "linear-gradient(90deg,#ff4d6a,#ffb07a)";
       if (r.ok) { status.innerHTML = `✔ ${Math.round(r.score * 100)}% · <b>“${r.heard}”</b> · ¡Muy bien!`; setTimeout(() => finish({ ...r, ok: true }), 900); }
-      else { status.innerHTML = r.heard ? `${Math.round(r.score * 100)}% · I heard: “${r.heard}” — try again · Inténtalo de nuevo` : `I could not hear you. Try again. · No te oí. Inténtalo de nuevo.`; }
+      else { status.innerHTML = r.heard ? `✖ ${Math.round(r.score * 100)}% · I heard: “${r.heard}” — press SPEAK to try again · pulsa HABLAR para reintentar` : `✖ I could not hear you — press SPEAK and speak clearly · pulsa HABLAR y habla claro.`; }
     };
     $('[data-sc="hear"]').addEventListener("click", hear);
     talk.addEventListener("click", say);

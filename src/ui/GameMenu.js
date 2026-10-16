@@ -131,7 +131,7 @@ const NAV = [
   ["status", "STATUS", "ESTADO", "★"], ["skills", "SKILLS", "HABILIDADES", "⚔"], ["party", "PARTY", "GRUPO", "♥"], ["levels", "LEVELS", "NIVELES", "▦"], ["inventory", "BAG", "OBJETOS", "◆"],
   ["settings", "SETTINGS", "AJUSTES", "⚙"], ["help", "CONTROLS", "CONTROLES", "⌨"], ["save", "SAVE", "GUARDAR", "▼"], ["load", "LOAD", "CARGAR", "▲"],
 ];
-const CYCLES = { difficulty: ["easy", "normal", "hard"], particles: ["low", "medium", "high"], touch: ["auto", "on", "off"] };
+const CYCLES = { difficulty: ["easy", "normal", "hard"], particles: ["low", "medium", "high"], touch: ["auto", "on", "off"], minimapSize: ["small", "medium", "large"] };
 const fmtDate = (ms) => new Date(ms).toLocaleString();
 const pct = (v) => Math.round(v * 100);
 const ALLY_ORDER = ["aria", "benny", "mileva", "chloe", "arc"];
@@ -424,6 +424,7 @@ export class GameMenu {
         ${toggle("flashes", "Flashes", "Destellos blancos (desactívalos si te molestan)")}
         ${cycle("particles", "Particles", "Calidad de partículas y destrucción")}
         ${toggle("minimap", "Minimap", "Mapa circular de ubicación")}
+        ${cycle("minimapSize", "Minimap size", "Tamaño del minimapa: pequeño · mediano · grande")}
         ${toggle("coords", "Coordinates", "Mostrar coordenadas")}
         ${cycle("touch", "Touch controls", "Mando táctil (Android / iOS): auto · on · off")}
         ${document.fullscreenEnabled ? `<div class="gm-opt"><span>Fullscreen<small>Pantalla completa</small></span><button data-fullscreen>${document.fullscreenElement ? "EXIT" : "ENTER"}</button></div>` : ""}

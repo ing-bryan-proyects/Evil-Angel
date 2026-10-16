@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   difficulty: "normal", subtitles: true, hints: true, // juego
   voice: true, speaking: false,                       // listening y speaking
   shake: true, flashes: true, particles: "high",      // efectos
-  minimap: true, coords: true, touch: "auto",         // pantalla y táctil
+  minimap: true, minimapSize: "medium", coords: true, touch: "auto",         // pantalla y táctil
   vibration: true, deadzone: 0.25,                    // mando
 });
 

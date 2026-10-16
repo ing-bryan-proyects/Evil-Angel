@@ -82,26 +82,31 @@ export const ENEMIES = Object.freeze({
 
   /* ---------------- B1 → C1 · Reinos siguientes (definidos, aún no activos) ---------------- */
   pyrus: {
-    id: "pyrus", name: "Pyrus", title: "Gólem de fuego / obsidiana", type: "boss", level: "B1", realm: 2,
+    id: "pyrus", name: "Pyrus", title: "Gólem de fuego / obsidiana", nameEs: "Pyrus", type: "boss", level: "B1", realm: 2,
     combat: "turns", spawn: "random", mechanic: "Controla el clima del mapa; exige Past Simple / Past Continuous.",
-    hp: 240, atk: 22,
+    hp: 240, atk: 22, lp: 90, gold: 70, aura: "#ff7a1e", lv: 8, atlas: "pyrus", stageScale: 1.5, worldScale: 1.5,
   },
   draven: {
-    id: "draven", name: "Draven", title: "Vampiro", type: "common", level: "B1+", realm: 2,
-    combat: "realtime", mechanic: "False friends: si eliges el falso amigo, absorbe tu maná.", hp: 6, speed: 60,
+    id: "draven", name: "Draven", title: "Vampiro", nameEs: "Draven", type: "common", level: "B1", realm: 2,
+    combat: "realtime", mechanic: "False friends: si eliges el falso amigo, absorbe tu maná.",
+    hp: 6, speed: 60, aggro: 165, bite: 11, window: 2.8, gold: [9, 15], lp: 18, gem: true, element: "dark", windup: 0.44, worldScale: 1.2, atlas: "draven",
+    pal: { body: "#2a1820", shade: "#160a10", hi: "#4a2838", mane: "#5a1020", eye: "#ff3b5a", claw: "#e0d0d8" },
   },
   elara: {
-    id: "elara", name: "Elara", title: "Vampiresa", type: "common", level: "B1+", realm: 2,
-    combat: "realtime", mechanic: "False friends con ataques especiales a distancia.", hp: 6, speed: 58,
+    id: "elara", name: "Elara", title: "Vampiresa", nameEs: "Elara", type: "common", level: "B1", realm: 2,
+    combat: "realtime", mechanic: "False friends con ataques especiales a distancia.",
+    hp: 6, speed: 56, aggro: 175, bite: 10, window: 3.0, gold: [10, 16], lp: 20, gem: true, element: "dark", windup: 0.46, worldScale: 1.15, atlas: "elara",
+    pal: { body: "#241026", shade: "#130814", hi: "#3e2042", mane: "#4a1030", eye: "#c86aff", claw: "#e0d0e8" },
   },
   valerius: {
-    id: "valerius", name: "Valerius", title: "Vampiro rey", type: "boss", level: "B2", realm: 2,
-    combat: "turns", spawn: "fixed", mechanic: "Modals & conditionals (would, should, must): sus definitivos drenan HP.",
-    hp: 300, atk: 26,
+    id: "valerius", name: "Valerius", title: "Vampiro rey", nameEs: "Valerius", type: "boss", level: "B1", realm: 2,
+    combat: "turns", spawn: "random", mechanic: "Modals & conditionals (would, should, must): sus definitivos drenan HP.",
+    hp: 300, atk: 26, lp: 95, gold: 75, aura: "#c0506e", lv: 9, atlas: "valerius", stageScale: 1.2, worldScale: 1.3,
   },
   aurelia: {
-    id: "aurelia", name: "Aurelia", title: "Vampiresa reina", type: "boss", level: "B2", realm: 2,
-    combat: "turns", spawn: "fixed", mechanic: "Modals & conditionals con drenaje de vida.", hp: 290, atk: 27,
+    id: "aurelia", name: "Aurelia", title: "Vampiresa reina", nameEs: "Aurelia", type: "boss", level: "B1", realm: 2,
+    combat: "turns", spawn: "random", mechanic: "Modals & conditionals con drenaje de vida.",
+    hp: 290, atk: 27, lp: 100, gold: 80, aura: "#b84a86", lv: 10, atlas: "aurelia", stageScale: 1.2, worldScale: 1.3,
   },
   amon: {
     id: "amon", name: "Amon", title: "Bestia quimera", type: "common", level: "B2+", realm: 3,
